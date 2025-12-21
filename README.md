@@ -2,6 +2,8 @@
 
 A modern, AI-powered implementation of the classic Connect Four game, built with Next.js, Rust/WASM, and advanced genetic algorithms.
 
+![Connect Four Screenshot](screenshot.png)
+
 ## Features
 
 - **Classic Gameplay**: Traditional Connect Four with modern UI
