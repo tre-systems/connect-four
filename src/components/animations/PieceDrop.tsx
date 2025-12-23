@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Player } from '@/lib/types';
 import GamePiece from '../game/GamePiece';

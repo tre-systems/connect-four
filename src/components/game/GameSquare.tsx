@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, isDevelopment } from '@/lib/utils';
 import { Player } from '@/lib/types';

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 
 interface GamePieceProps {
@@ -8,7 +8,7 @@ interface GamePieceProps {
   isClickable?: boolean;
 }
 
-const GamePiece = React.memo(function GamePiece({
+const GamePiece = memo(function GamePiece({
   player,
   isClickable = false,
   isWinning = false,

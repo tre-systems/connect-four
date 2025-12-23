@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Crown, Star, Zap, Trophy, ArrowRight, Circle } from 'lucide-react';
 
