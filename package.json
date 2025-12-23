@@ -18,7 +18,7 @@
     "build:wasm-assets": "npm run build:wasm && mkdir -p public/ml/data/genetic_params && cp ml/data/genetic_params/evolved.json public/ml/data/genetic_params/ && mkdir -p public/ml/data/weights && python3 scripts/convert_model_for_wasm.py ml/data/weights/simple_model.json public/ml/data/weights/ml_ai_weights_simple.json && cp worker/rust_ai_core/ml/data/weights/ml_ai_weights_distilled.json public/ml/data/weights/ml_ai_weights_best.json",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "nuke": "rm -rf .next .open-next .wrangler node_modules package-lock.json && npm install && npm run dev",
-    "check": "npm run lint && npm run type-check && (cd worker/rust_ai_core && NUM_GAMES=4 cargo test test_ai_matrix -- --nocapture) && npm run test:coverage && npm run test:e2e",
+    "check": "npm run type-check && (cd worker/rust_ai_core && NUM_GAMES=4 cargo test test_ai_matrix -- --nocapture) && npm run test:coverage && npm run test:e2e",
     "check:slow": "npm run lint && npm run type-check && (cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture) && npm run test:coverage && npm run test:e2e",
     "test": "vitest run",
     "test:watch": "vitest",

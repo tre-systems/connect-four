@@ -158,6 +158,7 @@ impl MLAI {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::COLS;
 
     #[test]
     fn test_ml_ai_new() {
