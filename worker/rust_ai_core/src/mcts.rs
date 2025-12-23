@@ -167,10 +167,12 @@ impl MCTS {
                 let relative_value = value_fn(&self.nodes[new_child_idx].state);
                 
                 // Update the new child node immediately
+                // We must store "Value for Parent" (which is -relative_value)
+                // because UCB maximizes the value for the chooser (Parent).
                 self.nodes[new_child_idx].visits += 1;
-                self.nodes[new_child_idx].total_value += relative_value;
+                self.nodes[new_child_idx].total_value -= relative_value;
                 
-                // Return NEGATED value to parent (Parent's perspective: Opponent's gain is our loss)
+                // Return NEGATED value to parent (Parent's perspective)
                 return -relative_value;
             }
         }
@@ -201,7 +203,8 @@ impl MCTS {
         
         // Update current node
         self.nodes[node_idx].visits += 1;
-        self.nodes[node_idx].total_value += value;
+        // We must store "Value for Parent" (which is -value, since `value` is for Self)
+        self.nodes[node_idx].total_value -= value;
         value
 
     }
