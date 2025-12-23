@@ -1,6 +1,6 @@
 use super::features::GameFeatures;
 use super::neural_network::{NetworkConfig, NeuralNetwork};
-use super::{GameState, COLS};
+use super::GameState;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

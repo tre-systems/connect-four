@@ -328,7 +328,7 @@ fn generate_solver_distillation_data(
     let mut training_data = Vec::new();
     use connect_four_ai_core::solver::Solver;
     use connect_four_ai_core::solver::Bitboard; // Ensure Bitboard is imported if needed for conversion, currently using GameState
-    use connect_four_ai_core::COLS;
+    
     use rand::Rng;
 
     // We use a clean Solver instance for analysis

@@ -1,5 +1,4 @@
-use crate::{GameState, Player, COLS};
-use rand::Rng;
+use crate::{GameState, COLS};
 use std::f32;
 
 #[derive(Debug, Clone)]
@@ -96,32 +95,14 @@ impl MCTS {
             }
         }
 
-        // Select best move
-        let best_move = if root_node.valid_moves.is_empty() {
-            // No valid moves available
-            0
-        } else {
-            root_node
-                .valid_moves
-                .iter()
-                .max_by(|&&a, &&b| {
-                    let a_visits = self.nodes[root_node
-                        .children
-                        .iter()
-                        .position(|&c| self.get_move_from_parent(root_idx, c) == a)
-                        .unwrap_or(0)]
-                    .visits;
-                    let b_visits = self.nodes[root_node
-                        .children
-                        .iter()
-                        .position(|&c| self.get_move_from_parent(root_idx, c) == b)
-                        .unwrap_or(0)]
-                    .visits;
-                    a_visits.cmp(&b_visits)
-                })
-                .copied()
-                .unwrap_or(root_node.valid_moves[0]) // Fallback to first valid move
-        };
+        // Select best move based on visit counts (which are in move_probs)
+        // move_probs indices correspond to columns (moves)
+        let best_move = move_probs
+            .iter()
+            .enumerate()
+            .max_by(|(_, &a), (_, &b)| a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(index, _)| index as u8)
+            .unwrap_or(0);
 
         (best_move, move_probs)
     }

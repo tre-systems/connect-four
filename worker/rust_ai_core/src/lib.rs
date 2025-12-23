@@ -1,6 +1,5 @@
 use crate::genetic_params::GeneticParams;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 #[cfg(feature = "wasm")]
