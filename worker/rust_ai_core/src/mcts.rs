@@ -161,7 +161,11 @@ impl MCTS {
             if !node.is_fully_expanded() {
                 // Expand node
                 let new_child_idx = self.expand_node(node_idx, policy_fn);
-                let value = self.rollout(&self.nodes[new_child_idx].state);
+                
+                // AlphaZero style: Use the value network prediction directly
+                // No random rollouts!
+                let value = value_fn(&self.nodes[new_child_idx].state);
+                
                 self.backpropagate(new_child_idx, value);
                 return value;
             }
@@ -228,27 +232,7 @@ impl MCTS {
         }
     }
 
-    fn rollout(&self, state: &GameState) -> f32 {
-        let mut current_state = state.clone();
-        let mut depth = 0;
-        const MAX_ROLLOUT_DEPTH: usize = 20;
 
-        while !current_state.is_game_over() && depth < MAX_ROLLOUT_DEPTH {
-            let valid_moves = current_state.get_valid_moves();
-            if valid_moves.is_empty() {
-                break;
-            }
-
-            // Random move selection for rollout
-            let random_move = valid_moves[rand::thread_rng().gen_range(0..valid_moves.len())];
-            if current_state.make_move(random_move).is_err() {
-                break;
-            }
-            depth += 1;
-        }
-
-        self.get_terminal_value(&current_state)
-    }
 
     fn backpropagate(&mut self, node_idx: usize, value: f32) {
         let mut current_idx = node_idx;

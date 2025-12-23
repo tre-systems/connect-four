@@ -55,8 +55,7 @@ impl MLAI {
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
-             // ... (keep existing early return) ...
-             return MLResponse {
+            return MLResponse {
                 r#move: None,
                 evaluation: 0.0,
                 thinking: "No valid moves available".to_string(),
@@ -70,8 +69,7 @@ impl MLAI {
         }
 
         if valid_moves.len() == 1 {
-            // ... (keep existing early return) ...
-             return MLResponse {
+            return MLResponse {
                 r#move: Some(valid_moves[0]),
                 evaluation: 0.0,
                 thinking: "Only one valid move".to_string(),
@@ -84,73 +82,57 @@ impl MLAI {
             };
         }
 
-        // Get current position evaluation
+        // Get raw network output for diagnostics
         let features = GameFeatures::from_game_state(state);
-        let value_output = self.value_network.forward(&features.to_array());
-        let policy_outputs = self.policy_network.forward(&features.to_array());
+        let raw_value = self.value_network.forward(&features.to_array())[0];
+        let raw_policy = self.policy_network.forward(&features.to_array());
 
+        // Use MCTS for search (AlphaZero style)
+        // 800 simulations provides strong tactical play (AlphaZero standard)
+        let mut mcts = super::mcts::MCTS::new(1.41, 800);
+
+        let value_net = &self.value_network;
+        let policy_net = &self.policy_network;
+
+        let value_fn = |s: &GameState| -> f32 {
+            let f = GameFeatures::from_game_state(s);
+            value_net.forward(&f.to_array())[0]
+        };
+
+        let policy_fn = |s: &GameState| -> Vec<f32> {
+            let f = GameFeatures::from_game_state(s);
+            policy_net.forward(&f.to_array()).to_vec()
+        };
+
+        let (best_move, move_probs) = mcts.search(state.clone(), &value_fn, &policy_fn);
+
+        // Convert MCTS probs to diagnostics
         let mut move_evaluations = Vec::new();
-        let mut best_move = valid_moves[0];
-        let mut best_score = f32::MIN;
-
         for &col in &valid_moves {
-            let mut next_state = state.clone();
-            if next_state.make_move(col).is_ok() {
-                // PURE EVALUATION: Policy Network indicates "Intuition", Value Network indicates "Outcome"
-                // For optimal play, we should trust the Value Network's prediction of the NEXT state primarily,
-                // but biased by the Policy Network's suggestion for the CURRENT state.
-                
-                let next_features = GameFeatures::from_game_state(&next_state);
-                let next_value = self.value_network.forward(&next_features.to_array());
-                
-                // Value is from perspective of player who JUST moved. 
-                // So high value for next_state means GOOD for the current player.
-                let value_score = next_value[0]; 
-                let policy_score = policy_outputs[col as usize];
-                
-                // Combine them. Policy is probability [0,1], Value is tanh [-1,1]
-                // We want to maximize Value, using Policy as a prior.
-                // Score = Value + c * Policy (AlphaZero style, though usually inside MCTS)
-                // For direct play: Score = Value * 0.8 + Policy * 0.5 (rough heuristics)
-                // Actually, just verify if immediate win exists (rule of game), otherwise trust Neural Net.
-                
-                let mut score = value_score; 
-                
-                // Boost score slightly by policy to break ties or guide exploration
-                score += policy_score * 0.1; 
-
-                // Basic Safety Check: Don't miss immediate wins
-                if next_state.has_winner() {
-                    score += 10.0; // Massive boost for winning
-                }
-
+            let prob = move_probs[col as usize];
+            if prob > 0.0 {
                 move_evaluations.push(MLMoveEvaluation {
                     column: col,
-                    score,
-                    move_type: "neural".to_string(),
+                    score: prob, // Display visit probability as score
+                    move_type: "mcts_visit_prob".to_string(),
                 });
-
-                if score > best_score {
-                    best_score = score;
-                    best_move = col;
-                }
             }
         }
-
+        
         move_evaluations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
         MLResponse {
             r#move: Some(best_move),
-            evaluation: value_output[0],
+            evaluation: raw_value,
             thinking: format!(
-                "ML AI chose column {} with score {:.3}. Value network: {:.3}",
-                best_move, best_score, value_output[0]
+                "MCTS searched 200 sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
+                best_move, move_probs[best_move as usize], raw_value
             ),
             diagnostics: MLDiagnostics {
                 valid_moves,
                 move_evaluations,
-                value_network_output: value_output[0],
-                policy_network_outputs: policy_outputs.to_vec(),
+                value_network_output: raw_value,
+                policy_network_outputs: raw_policy.to_vec(),
             },
         }
     }
