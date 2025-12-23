@@ -163,27 +163,15 @@ impl MCTS {
                 let new_child_idx = self.expand_node(node_idx, policy_fn);
                 
                 // AlphaZero style: Use the value network prediction directly
-                // No random rollouts!
-                let global_value = value_fn(&self.nodes[new_child_idx].state);
+                // Network returns Relative Value (1.0 = Win for current player, -1.0 = Loss)
+                let relative_value = value_fn(&self.nodes[new_child_idx].state);
                 
-                // CRITICAL FIX: The neural network returns global value (P1 = +1, P2 = -1).
-                // MCTS expects "Reward for the player who just moved".
-                // If P1 just moved to reach `new_child_idx`, they want global_value to be POSITIVE.
-                // If P2 just moved to reach `new_child_idx`, they want global_value to be NEGATIVE (meaning P2 win).
-                // But the MCTS maximization logic assumes "High Value = Good for Mover".
-                // So if P2 moves and gets global -1, that is Good. (-1 * -1 = +1 Reward).
+                // Update the new child node immediately
+                self.nodes[new_child_idx].visits += 1;
+                self.nodes[new_child_idx].total_value += relative_value;
                 
-                // "Who moved to get to this state?" -> The opponent of the current player in the state.
-                let state_player = self.nodes[new_child_idx].state.current_player;
-                let mover = state_player.opponent(); // The player who made the move to get here
-                
-                let relative_value = match mover {
-                    crate::Player::Player1 => global_value,      // P1 wants +1
-                    crate::Player::Player2 => -global_value,     // P2 wants -1 (so flip to +1)
-                };
-
-                self.backpropagate(new_child_idx, relative_value);
-                return relative_value;
+                // Return NEGATED value to parent (Parent's perspective: Opponent's gain is our loss)
+                return -relative_value;
             }
         }
 
@@ -194,6 +182,9 @@ impl MCTS {
         let best_child_idx = children
             .iter()
             .max_by(|&&a, &&b| {
+                // UCB expects score to be "Value for Player at node_idx"
+                // Our nodes store "total_value" relative to the player at that node.
+                // So Standard UCB works.
                 let a_score = self.nodes[a].ucb_score(self.exploration_constant, parent_visits);
                 let b_score = self.nodes[b].ucb_score(self.exploration_constant, parent_visits);
                 a_score
@@ -203,60 +194,16 @@ impl MCTS {
             .copied()
             .unwrap_or(node_idx);
 
-        let global_value = self.simulate_with_depth(best_child_idx, value_fn, policy_fn, depth + 1);
-        
-        // When passing value BACK up safely, simple backprop is fine because `backpropagate` just adds to total.
-        // BUT `simulate_with_depth` returns the value for the *child's* perspective?
-        // Wait, `simulate_with_depth` returns the outcome of the simulation relative to whom?
-        // It returns the value that was backpropagated AT THE LEAF.
-        // That value was "Relative to Mover at Leaf".
-        // Does that match "Relative to Mover at Node"?
-        // No. If Leaf is 3 steps deep, perspective flips every ply?
-        // Actually, standard MCTS backprop updates all nodes with the SAME value if it's "Global P1 Value".
-        // BUT UCT expects "Value relative to parent".
-        // My `backpropagate` adds `value` to ALL nodes in the path for average.
-        
-        // RE-THINK: 
-        // If UCB maximizes `total/visits`.
-        // Root (P1 turn). Child (P2 turn).
-        // If Child has 0.8. P1 picks it.
-        // Child (P2 turn). GrandChild (P1 turn).
-        // If GrandChild has 0.8. P2 picks it? No. P2 wants MIN global value.
-        // If we store RELATIVE value:
-        // P2 wants MAX relative value (which corresponds to Min Global).
-        
-        // So every node stores value relative to ITS parent's mover.
-        // Leaf (P3 turn, reached by P2). Relative Value = +1 (Global -1).
-        // Backprop +1 to Leaf.
-        // Parent of Leaf (P2 turn, reached by P1).
-        // Does Parent want +1? No. Parent is P1 mover. P1 wants Global +1.
-        // But Leaf was Global -1.
-        // So Leaf was BAD for P1.
-        // So Parent should receive -1.
-        
-        // CONCLUSION: AlphaZero usually flips value sign at each recursive return.
-        // `value = -simulate(...)`
-        
-        // Let's adopt strict Negamax MCTS:
-        // `simulate` returns value from perspective of CURRENT node's player.
-        // Then parent gets `-value`.
-        
-        // My current `backpropagate` blindly adds `value`.
-        // This implies `value` must be GLOBAL if we don't flip.
-        // But UCT MAXIMIZES.
-        
-        // FIX PLAN B (Clean Negamax):
-        // 1. `simulate` returns value for `node.state.current_player`.
-        // 2. Recursive call: `value = -simulate(child)`.
-        // 3. Backprop: `node.total_value += value`.
-        // 4. Leaf eval: `value = net_value * (if p1 {1} else {-1})`. (Evaluation for current player).
-        
-        // Let's convert to this logic.
-        
+        // Negamax Recursion
+        // We get value relative to Child's player. We want value relative to Current player.
+        // So we negate it.
         let value = -self.simulate_with_depth(best_child_idx, value_fn, policy_fn, depth + 1);
+        
+        // Update current node
         self.nodes[node_idx].visits += 1;
         self.nodes[node_idx].total_value += value;
         value
+
     }
 
     fn expand_node(
@@ -301,28 +248,14 @@ impl MCTS {
 
 
 
-    fn backpropagate(&mut self, node_idx: usize, value: f32) {
-        let mut current_idx = node_idx;
-
-        while current_idx < self.nodes.len() {
-            let parent_idx = self.nodes[current_idx].parent;
-            self.nodes[current_idx].visits += 1;
-            self.nodes[current_idx].total_value += value;
-
-            if let Some(parent) = parent_idx {
-                current_idx = parent;
-            } else {
-                // Reached root node
-                break;
-            }
-        }
-    }
+    // fn backpropagate(...) - Removed in favor of recursive updates
 
     fn get_terminal_value(&self, state: &GameState) -> f32 {
         if let Some(winner) = state.get_winner() {
-            match winner {
-                Player::Player1 => 1.0,
-                Player::Player2 => -1.0,
+            if winner == state.current_player {
+                1.0
+            } else {
+                -1.0
             }
         } else {
             0.0 // Draw
