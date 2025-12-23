@@ -27,8 +27,8 @@ pub struct MLResponse {
 }
 
 pub struct MLAI {
-    value_network: NeuralNetwork,
-    policy_network: NeuralNetwork,
+    pub value_network: NeuralNetwork,
+    pub policy_network: NeuralNetwork,
 }
 
 impl MLAI {

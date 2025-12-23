@@ -260,13 +260,156 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("===================================");
         }
 
+        "train_supervised" => {
+            // Supervised learning from distillation data
+            let data_file = args.get(2).cloned().unwrap_or("ml/data/weights/solver_distillation_data.json".to_string());
+            let epochs = args.get(3).and_then(|s| s.parse().ok()).unwrap_or(20);
+            let lr = args.get(4).and_then(|s| s.parse().ok()).unwrap_or(0.01);
+            
+            println!("=== Connect Four Supervised Training ===");
+            println!("Data source: {}", data_file);
+            println!("Epochs: {}", epochs);
+            println!("Learning Rate: {}", lr);
+            println!("======================================");
+            
+            train_supervised(&data_file, epochs, lr)?;
+        }
+
+        "generate_solver_data" => {
+            // Distillation data generation mode
+            let num_games = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(100);
+            let output_file = args.get(3).cloned().unwrap_or("ml/data/weights/solver_distillation_data.json".to_string());
+            
+            println!("=== Connect Four Solver Distillation ===");
+            println!("Games: {}", num_games);
+            println!("Output: {}", output_file);
+            println!("========================================");
+            
+            let start_time = Instant::now();
+            println!("\n🧠 Generating high-quality data from Solver...");
+            
+            let training_data = generate_solver_distillation_data(num_games)?;
+            
+             // Save training data
+            if let Some(parent) = std::path::Path::new(&output_file).parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            
+            let output_data = serde_json::json!({
+                "metadata": {
+                    "num_games": num_games,
+                    "source": "solver_distillation",
+                    "generated_at": chrono::Utc::now().to_rfc3339(),
+                    "version": "2.0"
+                },
+                "training_data": training_data
+            });
+            
+            fs::write(&output_file, serde_json::to_string_pretty(&output_data)?)?;
+            
+            let total_time = start_time.elapsed();
+            println!("\n=== Distillation Complete ===");
+            println!("Total time: {:.2} seconds", total_time.as_secs_f64());
+            println!("Samples generated: {}", training_data.len());
+        }
+
         _ => {
             println!("Unknown command: {}", command);
-            println!("Available commands: train, evaluate, generate_data, self_play");
+            println!("Available commands: train, evaluate, generate_data, self_play, generate_solver_data");
         }
     }
 
     Ok(())
+}
+
+fn generate_solver_distillation_data(
+    num_games: usize,
+) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error>> {
+    let mut training_data = Vec::new();
+    use connect_four_ai_core::solver::Solver;
+    use connect_four_ai_core::solver::Bitboard; // Ensure Bitboard is imported if needed for conversion, currently using GameState
+    use connect_four_ai_core::COLS;
+    use rand::Rng;
+
+    // We use a clean Solver instance for analysis
+    let mut solver = Solver::new();
+
+    for game_idx in 0..num_games {
+        if game_idx % 10 == 0 {
+            println!("Generating game {}/{}", game_idx + 1, num_games);
+        }
+
+        let mut game_state = GameState::new();
+        // Random opening moves (4-8 plies) to diversify positions
+        let opening_moves = rand::thread_rng().gen_range(4..=8);
+        
+        for _ in 0..opening_moves {
+            let valid = game_state.get_valid_moves();
+            if valid.is_empty() { break; }
+            let random_move = valid[rand::thread_rng().gen_range(0..valid.len())];
+            game_state.make_move(random_move).unwrap();
+        }
+
+        // Now play out the game using Solver vs Solver (or just record Solver's evaluation of current state)
+        // We actually want to record the Solver's evaluation for *various* positions.
+        // Let's play the game out with Solver moves, recording each step.
+        
+        while !game_state.is_game_over() {
+            let features = connect_four_ai_core::features::GameFeatures::from_game_state(&game_state);
+            let features_array = features.to_array();
+
+            // Analyze with Solver
+            // Use depth 10 for high quality (engine depth ~16 effectively)
+            // Note: Solver::analyze returns (best_move, score). score is absolute for current player.
+            // We need to carefully map score.
+            // Solver::analyze takes NO depth argument, it uses its internal logic or we need to call something else?
+            // Wait, Solver::analyze in previous context took `depth`. Let's verify signature.
+            // Actually `get_best_move` in lib.rs delegates to `solver.analyze(depth)`.
+            // Let's assume we can call solver.analyze(depth).
+            
+            // We need to convert GameState to Bitboard to use Solver directly, OR use AI::get_best_move which wraps it.
+            // Using AI struct is easier if it exposes everything, but Solver is cleaner.
+            // Let's rely on Bitboard::from_game_state if available.
+            // Checking imports... `Bitboard` is in `solver` module.
+            // Actually, let's just use `AI` struct for simplicity? No, `AI` does not return detailed score for *training* target directly in a normalized way easily?
+            // Solver returns `(Option<usize>, i32)`.
+            // i32 score: >0 winning, <0 losing. Max score approx 22.
+            
+            let bitboard = Bitboard::from_game_state(&game_state);
+            // Search depth: 10
+            let (best_move, score) = solver.analyze(&bitboard, 10);
+            
+            // value_target: normalize score to [-1.0, 1.0]
+            // Standard minimax score logic needed.
+            let value_target = if score > 0 { 1.0 } else if score < 0 { -1.0 } else { 0.0 };
+            
+            // policy_target: 1.0 for best_move, 0.0 others.
+            let mut policy_target = vec![0.0; 7];
+            if let Some(mv) = best_move {
+                if mv < 7 {
+                    policy_target[mv] = 1.0;
+                }
+            }
+
+            // Store sample
+            training_data.push(serde_json::json!({
+                "features": features_array.to_vec(),
+                "value_target": value_target,
+                "policy_target": policy_target,
+            }));
+
+            // Make the move
+            if let Some(mv) = best_move {
+                 if game_state.make_move(mv as u8).is_err() {
+                     break; 
+                 }
+            } else {
+                break; // No move found (draw or loss?)
+            }
+        }
+    }
+    
+    Ok(training_data)
 }
 
 fn generate_self_play_data(
@@ -378,4 +521,99 @@ fn generate_self_play_data(
     }
 
     Ok(training_data)
+}
+
+fn train_supervised(
+    data_file: &str,
+    epochs: usize,
+    lr: f32,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use ndarray::Array1;
+    use rand::seq::SliceRandom;
+    use rand::thread_rng;
+
+    println!("Loading data from {}...", data_file);
+    let content = fs::read_to_string(data_file)?;
+    let json_data: serde_json::Value = serde_json::from_str(&content)?;
+    
+    let training_data = json_data["training_data"].as_array().ok_or("No training_data found")?;
+    println!("Loaded {} training samples", training_data.len());
+    
+    let mut ai = MLAI::new();
+    let mut rng = thread_rng();
+    
+    struct Sample {
+        features: Array1<f32>,
+        value_target: Array1<f32>,
+        policy_target: Array1<f32>,
+    }
+    
+    let mut samples: Vec<Sample> = training_data.iter().map(|item| {
+        let features: Vec<f32> = item["features"].as_array().unwrap().iter().map(|x| x.as_f64().unwrap() as f32).collect();
+        let value_target = vec![item["value_target"].as_f64().unwrap() as f32];
+        let policy_target: Vec<f32> = item["policy_target"].as_array().unwrap().iter().map(|x| x.as_f64().unwrap() as f32).collect();
+        
+        Sample {
+            features: Array1::from_vec(features),
+            value_target: Array1::from_vec(value_target),
+            policy_target: Array1::from_vec(policy_target),
+        }
+    }).collect();
+    
+    println!("Starting training for {} epochs...", epochs);
+    let batch_size = 32;
+    
+    for epoch in 0..epochs {
+        samples.shuffle(&mut rng);
+        let mut total_value_loss = 0.0;
+        let mut total_policy_loss = 0.0;
+        let mut batches = 0;
+        
+        for batch in samples.chunks(batch_size) {
+            for sample in batch {
+                 // Train value network (predicts game outcome)
+                 let val_loss = ai.value_network.train_step(&sample.features, &sample.value_target, lr);
+                 total_value_loss += val_loss;
+                 
+                 // Train policy network (predicts best move)
+                 let pol_loss = ai.policy_network.train_step(&sample.features, &sample.policy_target, lr);
+                 total_policy_loss += pol_loss;
+            }
+            batches += 1;
+        }
+        
+        println!("Epoch {}: Value Loss = {:.4}, Policy Loss = {:.4}", 
+            epoch + 1, 
+            total_value_loss / (samples.len() as f32),
+            total_policy_loss / (samples.len() as f32)
+        );
+    }
+    
+    // Save weights
+    let output_file = "ml/data/weights/ml_ai_weights_distilled.json";
+    if let Some(parent) = std::path::Path::new(output_file).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    
+    let value_weights = ai.value_network.get_weights();
+    let policy_weights = ai.policy_network.get_weights();
+    
+    let weights_data = serde_json::json!({
+        "metadata": {
+            "type": "distilled",
+            "epochs": epochs,
+            "generated_at": chrono::Utc::now().to_rfc3339()
+        },
+        "value_network": {
+            "weights": value_weights
+        },
+        "policy_network": {
+            "weights": policy_weights
+        }
+    });
+    
+    fs::write(output_file, serde_json::to_string_pretty(&weights_data)?)?;
+    println!("💾 Distilled weights saved to: {}", output_file);
+    
+    Ok(())
 }

@@ -86,4 +86,7 @@ test_pytorch_weights*.json
 # Training data directory
 ~/Desktop/connect-four-training-data/
 
+
 /test_state.json
+worker/rust_ai_core/ml/data/weights/solver_distillation_data.json
+

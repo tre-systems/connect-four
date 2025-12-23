@@ -26,84 +26,50 @@ impl GameFeatures {
         }
 
         // Strategic features
-        features[idx] = Self::center_control_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::center_control_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::pieces_count(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::pieces_count(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::threat_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::threat_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::mobility_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::mobility_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::vertical_control_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::vertical_control_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::horizontal_control_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::horizontal_control_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::diagonal_control_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::diagonal_control_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::blocking_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::blocking_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::height_advantage_score(state, Player::Player1) as f32;
-        idx += 1;
-
-        features[idx] = Self::height_advantage_score(state, Player::Player2) as f32;
-        idx += 1;
-
-        features[idx] = Self::material_balance_score(state) as f32;
-        idx += 1;
-
-        features[idx] = Self::positional_advantage_score(state, Player::Player1);
-        idx += 1;
-
-        features[idx] = Self::positional_advantage_score(state, Player::Player2);
-        idx += 1;
-
-        features[idx] = Self::endgame_evaluation(state, Player::Player1);
-        idx += 1;
-
-        features[idx] = Self::endgame_evaluation(state, Player::Player2);
-        idx += 1;
-
+        // Normalize strategic features (approx scale to 0-10 range)
+        features[42] = Self::center_control_score(state, Player::Player1) as f32 / 10.0;
+        features[43] = Self::center_control_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[44] = Self::pieces_count(state, Player::Player1) as f32; // Already small
+        features[45] = Self::pieces_count(state, Player::Player2) as f32;
+        
+        features[46] = Self::threat_score(state, Player::Player1) as f32 / 100.0; // 1000 -> 10.0
+        features[47] = Self::threat_score(state, Player::Player2) as f32 / 100.0;
+        
+        features[48] = Self::mobility_score(state, Player::Player1) as f32 / 10.0;
+        features[49] = Self::mobility_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[50] = Self::vertical_control_score(state, Player::Player1) as f32 / 10.0;
+        features[51] = Self::vertical_control_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[52] = Self::horizontal_control_score(state, Player::Player1) as f32 / 10.0;
+        features[53] = Self::horizontal_control_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[54] = Self::diagonal_control_score(state, Player::Player1) as f32 / 10.0;
+        features[55] = Self::diagonal_control_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[56] = Self::blocking_score(state, Player::Player1) as f32 / 10.0;
+        features[57] = Self::blocking_score(state, Player::Player2) as f32 / 10.0;
+        
+        features[58] = Self::height_advantage_score(state, Player::Player1) as f32 / 100.0;
+        features[59] = Self::height_advantage_score(state, Player::Player2) as f32 / 100.0;
+        
+        features[60] = Self::material_balance_score(state) as f32;
+        
+        features[61] = Self::positional_advantage_score(state, Player::Player1); // Already small? Check impl
+        features[62] = Self::positional_advantage_score(state, Player::Player2);
+        
+        features[63] = Self::endgame_evaluation(state, Player::Player1);
+        features[64] = Self::endgame_evaluation(state, Player::Player2);
+        
         // Fill remaining features with zeros
-        while idx < SIZE {
-            features[idx] = 0.0;
-            idx += 1;
+        for i in 65..SIZE {
+             features[i] = 0.0;
         }
 
         // Normalize features to ensure they're in reasonable bounds
         for i in 0..SIZE {
-            features[i] = features[i].max(-10.0).min(10.0);
+            features[i] = features[i].max(-20.0).min(20.0);
         }
 
         GameFeatures { features }
