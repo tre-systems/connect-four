@@ -88,5 +88,6 @@ test_pytorch_weights*.json
 
 
 /test_state.json
-worker/rust_ai_core/ml/data/weights/solver_distillation_data.json
+worker/rust_ai_core/ml/data/weights/*.json
+!worker/rust_ai_core/ml/data/weights/ml_ai_weights_distilled.json
 

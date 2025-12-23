@@ -36,12 +36,12 @@ impl MLAI {
         // Create networks with appropriate sizes for Connect Four
         let value_config = NetworkConfig {
             input_size: 100,
-            hidden_sizes: vec![64, 32],
+            hidden_sizes: vec![256, 128, 64], // Deep Network
             output_size: 1,
         };
         let policy_config = NetworkConfig {
             input_size: 100,
-            hidden_sizes: vec![64, 32],
+            hidden_sizes: vec![256, 128, 64], // Deep Network
             output_size: 7,
         };
 
@@ -55,7 +55,8 @@ impl MLAI {
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
-            return MLResponse {
+             // ... (keep existing early return) ...
+             return MLResponse {
                 r#move: None,
                 evaluation: 0.0,
                 thinking: "No valid moves available".to_string(),
@@ -69,7 +70,8 @@ impl MLAI {
         }
 
         if valid_moves.len() == 1 {
-            return MLResponse {
+            // ... (keep existing early return) ...
+             return MLResponse {
                 r#move: Some(valid_moves[0]),
                 evaluation: 0.0,
                 thinking: "Only one valid move".to_string(),
@@ -94,61 +96,38 @@ impl MLAI {
         for &col in &valid_moves {
             let mut next_state = state.clone();
             if next_state.make_move(col).is_ok() {
+                // PURE EVALUATION: Policy Network indicates "Intuition", Value Network indicates "Outcome"
+                // For optimal play, we should trust the Value Network's prediction of the NEXT state primarily,
+                // but biased by the Policy Network's suggestion for the CURRENT state.
+                
                 let next_features = GameFeatures::from_game_state(&next_state);
                 let next_value = self.value_network.forward(&next_features.to_array());
+                
+                // Value is from perspective of player who JUST moved. 
+                // So high value for next_state means GOOD for the current player.
+                let value_score = next_value[0]; 
+                let policy_score = policy_outputs[col as usize];
+                
+                // Combine them. Policy is probability [0,1], Value is tanh [-1,1]
+                // We want to maximize Value, using Policy as a prior.
+                // Score = Value + c * Policy (AlphaZero style, though usually inside MCTS)
+                // For direct play: Score = Value * 0.8 + Policy * 0.5 (rough heuristics)
+                // Actually, just verify if immediate win exists (rule of game), otherwise trust Neural Net.
+                
+                let mut score = value_score; 
+                
+                // Boost score slightly by policy to break ties or guide exploration
+                score += policy_score * 0.1; 
 
-                let mut score = next_value[0] * 0.7 + policy_outputs[col as usize] * 0.3;
-
-                // Use evolved genetic parameters for center control bonuses
-                let center_control_weight = state.genetic_params.center_control_weight as f32;
-                match col {
-                    3 => score += center_control_weight * 0.1, // Center column
-                    2 | 4 => score += center_control_weight * 0.05, // Adjacent to center
-                    _ => {}
-                }
-
-                // Check for immediate threats using evolved genetic parameters
+                // Basic Safety Check: Don't miss immediate wins
                 if next_state.has_winner() {
-                    score += 100.0; // Winning move - highest priority
-                } else {
-                    // Check for opponent threats that need blocking using evolved threat weight
-                    let opponent = state.current_player.opponent();
-                    let mut opponent_can_win = false;
-                    let mut opponent_winning_column = None;
-
-                    for opp_col in 0..COLS {
-                        if state.can_place_in_column(opp_col) {
-                            let mut test_state = state.clone();
-                            if test_state.make_move(opp_col as u8).is_ok() {
-                                if test_state.has_winner()
-                                    && test_state.get_winner() == Some(opponent)
-                                {
-                                    opponent_can_win = true;
-                                    opponent_winning_column = Some(opp_col);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // If opponent can win next move, this move must block
-                    if opponent_can_win {
-                        // Check if this move blocks the opponent's winning move
-                        if col == opponent_winning_column.unwrap() as u8 {
-                            // This move blocks the opponent's winning move
-                            let threat_weight = state.genetic_params.threat_weight;
-                            score += (threat_weight * 10.0) as f32; // Use evolved threat weight
-                        } else {
-                            // This move doesn't block - heavily penalize it
-                            score -= 1000.0; // Much stronger penalty
-                        }
-                    }
+                    score += 10.0; // Massive boost for winning
                 }
 
                 move_evaluations.push(MLMoveEvaluation {
                     column: col,
                     score,
-                    move_type: "drop".to_string(),
+                    move_type: "neural".to_string(),
                 });
 
                 if score > best_score {

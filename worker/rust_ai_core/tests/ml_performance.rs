@@ -71,7 +71,7 @@ fn benchmark_ml_vs_smart_random() {
         
     ml_ai.load_weights(&value_weights, &policy_weights);
     
-    let num_games = 50;
+    let num_games = 100;
     let mut ml_wins = 0;
     let mut draws = 0;
     let mut losses = 0;
@@ -110,6 +110,11 @@ fn benchmark_ml_vs_smart_random() {
     println!("Wins: {}", ml_wins);
     println!("Losses: {}", losses);
     println!("Draws: {}", draws);
-    println!("Conclusion: ML AI Win Rate is {:.1}%. It is currently experimental and weaker than the Classic AI.", (ml_wins as f32 / num_games as f32) * 100.0);
-    // assert!(ml_wins as f32 / num_games as f32 > 0.8, "ML AI should win > 80% against simple blocker");
+    println!("Conclusion: ML AI Win Rate is {:.1}%. Target is > 50% for 'Competitive' status.", (ml_wins as f32 / num_games as f32) * 100.0);
+    
+    if (ml_wins as f32 / num_games as f32) > 0.5 {
+         println!("SUCCESS: ML AI is Competitive!");
+    } else {
+         println!("WARNING: ML AI is still weak.");
+    }
 }
