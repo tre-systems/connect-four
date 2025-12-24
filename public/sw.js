@@ -1,8 +1,13 @@
-const CACHE_VERSION = '1766563202280-local-v1.0.0';
+const CACHE_VERSION = '1766564245115-local-v1.0.0';
 const CACHE_NAME = `connect-4-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
-const STATIC_ASSETS = ['/', '/offline', '/manifest.json', '/favicon.ico'];
+const STATIC_ASSETS = [
+  '/',
+  '/offline',
+  '/manifest.json',
+  '/favicon.ico',
+];
 
 self.addEventListener('install', event => {
   console.log('[SW] Install event');
@@ -55,13 +60,13 @@ self.addEventListener('fetch', event => {
   }
 
   const url = new URL(event.request.url);
-
+  
   // WASM files - serve directly without caching
   if (url.pathname.startsWith('/wasm/')) {
     event.respondWith(fetch(event.request));
     return;
   }
-
+  
   // Static assets (JS, CSS, images) - cache first
   if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/')) {
     event.respondWith(
@@ -69,7 +74,7 @@ self.addEventListener('fetch', event => {
         if (cachedResponse) {
           return cachedResponse;
         }
-
+        
         return fetch(event.request).then(response => {
           if (response && response.status === 200) {
             const responseToCache = response.clone();
@@ -105,16 +110,16 @@ self.addEventListener('fetch', event => {
       })
       .catch(error => {
         console.log('[SW] Fetch failed, trying cache:', error);
-
+        
         return caches.match(event.request).then(cachedResponse => {
           if (cachedResponse) {
             return cachedResponse;
           }
-
+          
           if (event.request.destination === 'document') {
             return caches.match(OFFLINE_URL);
           }
-
+          
           throw error;
         });
       })
@@ -174,7 +179,7 @@ self.addEventListener('notificationclick', event => {
 
 self.addEventListener('message', event => {
   console.log('[SW] Message received:', event.data);
-
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

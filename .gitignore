@@ -91,3 +91,4 @@ test_pytorch_weights*.json
 worker/rust_ai_core/ml/data/weights/*.json
 !worker/rust_ai_core/ml/data/weights/ml_ai_weights_distilled.json
 
+public/sw.js

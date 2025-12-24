@@ -1,11 +1,9 @@
 import { defineCloudflareConfig } from '@opennextjs/cloudflare';
-import r2IncrementalCache from '@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache';
 
 /**
  * @type {import("@opennextjs/cloudflare").OpenNextConfig}
  */
 const config = {
-  incrementalCache: r2IncrementalCache,
   default: {
     override: {
       wrapper: 'cloudflare-node',
@@ -32,4 +30,4 @@ const config = {
   },
 };
 
-export default defineCloudflareConfig(config);
+export default defineCloudflareConfig(config as any);

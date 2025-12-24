@@ -129,7 +129,6 @@ impl GameState {
     }
 
     pub fn get_winner(&self) -> Option<Player> {
-        // Check for winning lines
         for col in 0..COLS {
             for row in 0..ROWS {
                 if let Some(player) = self.board[col][row].to_player() {
@@ -165,16 +164,13 @@ impl GameState {
             return Err("Column is full");
         }
 
-        // Find the lowest empty row
         let row = self.get_lowest_empty_row(col);
         if row >= ROWS {
             return Err("Column is full");
         }
 
-        // Place the piece
         self.board[col][row] = Cell::from_player(self.current_player);
 
-        // Switch players
         self.current_player = self.current_player.opponent();
 
         Ok(())
@@ -215,7 +211,6 @@ impl GameState {
     ) -> usize {
         let mut count = 1;
 
-        // Count in positive direction
         let mut c = col as i32 + dcol;
         let mut r = row as i32 + drow;
         while c >= 0 && c < COLS as i32 && r >= 0 && r < ROWS as i32 {
@@ -228,7 +223,6 @@ impl GameState {
             }
         }
 
-        // Count in negative direction
         c = col as i32 - dcol;
         r = row as i32 - drow;
         while c >= 0 && c < COLS as i32 && r >= 0 && r < ROWS as i32 {

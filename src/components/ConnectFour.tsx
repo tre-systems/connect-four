@@ -44,12 +44,8 @@ export default function ConnectFour() {
     soundEffects.setEnabled(soundEnabled);
   }, [soundEnabled]);
 
-  // Log initial game state
-  useEffect(() => {
-    // Game initialized
-  }, []);
+  useEffect(() => {}, []);
 
-  // Handle AI moves
   useEffect(() => {
     const shouldMakeAIMove =
       gameState.gameStatus === 'playing' &&
@@ -70,7 +66,6 @@ export default function ConnectFour() {
     return undefined;
   }, [gameState.gameStatus, gameState.currentPlayer, aiThinking, makeAIMove, gameMode]);
 
-  // Handle game completion sounds
   useEffect(() => {
     if (gameState.gameStatus === 'finished' && gameState.winner) {
       setTimeout(() => {

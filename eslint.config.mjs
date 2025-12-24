@@ -6,7 +6,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['.next', 'node_modules', '*.config.mjs', 'worker/rust_ai_core/pkg/**', 'public/**', 'src/lib/wasm/**', 'out/**'],
+    ignores: ['.next', 'node_modules', '*.config.mjs', 'worker/rust_ai_core/pkg/**', 'public/**', 'src/lib/wasm/**', 'out/**', '.open-next/**', 'coverage/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
