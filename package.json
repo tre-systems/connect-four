@@ -48,7 +48,8 @@
     "prepare": "husky",
     "generate:types": "./scripts/generate-types.sh",
     "test:wasm-loading": "node scripts/test-wasm-loading.js",
-    "utils:convert-model": "python3 scripts/convert_model_for_wasm.py"
+    "utils:convert-model": "python3 scripts/convert_model_for_wasm.py",
+    "train": "cd worker && cargo run --release --bin train --features binary"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",

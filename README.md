@@ -64,7 +64,7 @@ The game features a sophisticated Dual AI system powered by Rust and WebAssembly
 
 1.  **Bitboard Solver**: High-performance solver using [64-bit optimizations](https://github.com/denkspuren/BitboardC4/txt/CONECT4.TXT).
 2.  **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style neural (Value/Policy) + MCTS.
-3.  **Self-Play**: Advanced training capability.
+3.  **Supervised Training**: Models trained using bitboard solver as teacher.
 
 > For detailed architecture and performance stats, see [AI System Documentation](docs/AI-SYSTEM.md).
 
@@ -80,7 +80,7 @@ The AI parameters are evolved using genetic algorithms. Results are included in 
 ## Project Status
 
 - **All lint, type checks, and tests pass** as of the latest commit.
-- **AI Matrix**: All AI types tested, with **Bitboard-Solver (Depth 6)** and **ML-MCTS (AlphaZero)** showing strong performance. See [`docs/AI-MATRIX-RESULTS.md`](docs/AI-MATRIX-RESULTS.md) for details.
+- **AI Matrix**: All AI types tested, with **Bitboard-Solver (Depth 6)** and **ML-MCTS (AlphaZero)** showing strong performance.
 - **Coverage**: 70% statements, 82% branches, 77% functions. All core logic and AI modules are well covered.
 - **E2E**: All Playwright end-to-end tests pass.
 - **AI vs AI Mode**: Now supports Classic AI vs ML AI battles with clear visual indicators.

@@ -27,9 +27,10 @@ connect-four/
 │   ├── app/               # Next.js app directory
 │   ├── components/        # React components
 │   └── lib/               # Core logic and utilities
-├── worker/                # Rust AI engine
-│   └── rust_ai_core/      # Core AI logic
-├── ml/                    # Machine learning scripts
+├── worker/                # Rust AI engine (WASM source)
+│   ├── src/               # Core AI logic
+│   └── tests/             # Rust integration tests
+├── resources/             # Static assets (AI weights, params)
 ├── e2e/                   # End-to-end tests
 └── docs/                  # Documentation
 ```
@@ -60,9 +61,6 @@ Genetic parameters use UUID-based identifiers (36 characters) for uniqueness and
 ### AI Testing
 
 ```bash
-# Run AI matrix test
-npm run test:ai-matrix:md
-
 # Run comprehensive AI comparison
 npm run test:ai-comparison:comprehensive
 ```
@@ -132,7 +130,7 @@ npm run test:rust:slow
 ### Development Build
 
 ```bash
-# Build WASM assets
+# Build WASM assets (compiles Rust, copies weights from resources/ai)
 npm run build:wasm-assets
 
 # Build for development
@@ -206,7 +204,7 @@ If you encounter WASM loading issues:
 
 3. Verify WASM compilation:
    ```bash
-   cd worker/rust_ai_core && cargo check
+   cd worker && cargo check
    ```
 
 ### Database Issues
@@ -271,4 +269,17 @@ npm run test:ai-comparison:fast
 
 # Monitor logs
 npm run logs
+```
+
+## Helper Scripts
+
+```bash
+# Generate TypeScript types from Rust
+npm run generate:types
+
+# Verify WASM loading in node environment
+npm run test:wasm-loading
+
+# Convert PyTorch models to JSON for WASM
+npm run utils:convert-model
 ```

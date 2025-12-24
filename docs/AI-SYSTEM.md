@@ -15,16 +15,16 @@ The Connect Four AI system uses multiple approaches to provide different levels 
 The ML AI uses a deep neural network architecture optimized for both tactical precision and client-side performance:
 
 ```python
-# Value Network: 100 -> 256 -> 128 -> 64 -> 1
-# Policy Network: 100 -> 256 -> 128 -> 64 -> 7
+# Value Network: 100 -> 128 -> 128 -> 128 -> 128 -> 1
+# Policy Network: 100 -> 128 -> 128 -> 128 -> 128 -> 7
 ```
 
 **Key Features:**
 
 - **Input**: 100 strategic features (Board occupancy + Positional advantages)
-- **Hidden layers**: 256 → 128 → 64 neurons (ReLU activation)
+- **Hidden layers**: 4 layers of 128 neurons (ResNet-lite)
 - **Output**: Value (Tanh, -1 to 1) and Policy (Softmax, 7 move probabilities)
-- **Search**: MCTS (Monte Carlo Tree Search) with 800 simulations per move
+- **Search**: MCTS (Monte Carlo Tree Search) with 4000 simulations per move
 - **Performance**: High tactical strength through supervised training
 - **Size**: ~328KB per network
 
@@ -44,8 +44,8 @@ The model is trained using a **Supervised Learning** pipeline where the **Bitboa
 - **Teacher Depth**: 12 (solver evaluations)
 - **Training**: 100 epochs with LR decay (0.001 → 0.0001 → 0.00001)
 - **Results**: Value Loss 0.033, Policy Loss 1.95
-- **Architecture**: [256, 128, 64] hidden layers
-- **Weights**: `public/ml/data/weights/ml_ai_weights_best.json`
+- **Architecture**: 4x128 ResNet-lite
+- **Weights**: `resources/ai/ml_ai_weights_best.json` (source) -> `public/ml/data/weights/` (build output)
 
 ## Available WASM AI Infrastructure
 
@@ -56,15 +56,9 @@ The codebase contains a robust Rust/WASM AI system:
 - **Genetic AI**: Parameter-optimized evaluation functions ✅
 - **Training Utility**: Supervised training script (`train.rs`) for rapid model improvement ✅
 
-### Recent Fix: MCTS & Perspective Correction
+### MCTS Strategy
 
-**Issue Fixed (Dec 2024)**: The ML AI exhibited "suicidal" play due to a sign error in the MCTS backpropagation and a perspectival mismatch (NN output was always from Player 1's perspective).
-
-**Solution**:
-
-- Made features **perspective-invariant** (Current Player = 1.0, Opponent = -1.0)
-- Simplified MCTS value function—no manual negation needed
-- Switched to a deeper [256, 128, 64] architecture for better tactical representation
+The AI uses Monte Carlo Tree Search (MCTS) with perspective-invariant features (Current Player = 1.0, Opponent = -1.0) to evaluate positions. The 4x128 architecture provides deep tactical representation without sacrificing client-side inference speed.
 
 ## AI Performance Comparison
 
@@ -92,7 +86,7 @@ Based on Dec 2024 testing:
 
 If the ML AI fails to load:
 
-1. Check that `ml_ai_weights_best.json` exists in `public/ml/data/weights/`
+1. Check that `ml_ai_weights_best.json` exists in `public/ml/data/weights/` (copied from `resources/ai/` during build)
 2. Verify the architecture in `neural_network.rs` matches the weights.
 3. Check browser console for WASM errors.
 

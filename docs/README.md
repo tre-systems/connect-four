@@ -21,11 +21,10 @@ Welcome to the Connect Four project documentation. This guide provides comprehen
 
 ### Reference Documentation
 
-| Document                                           | Purpose                                  | Audience         |
-| -------------------------------------------------- | ---------------------------------------- | ---------------- |
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)**           | System design, data flow, infrastructure | Architects       |
-| **[AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md)** | Latest AI performance metrics            | AI researchers   |
-| **[TODO.md](./TODO.md)**                           | Current tasks and future plans           | Project managers |
+| Document                                 | Purpose                                  | Audience         |
+| ---------------------------------------- | ---------------------------------------- | ---------------- |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | System design, data flow, infrastructure | Architects       |
+| **[TODO.md](./TODO.md)**                 | Current tasks and future plans           | Project managers |
 
 ## 🚀 Quick Reference
 
@@ -42,7 +41,6 @@ npm run deploy       # Deploy to Cloudflare
 
 ```bash
 npm run test:ai-comparison    # Test AI performance
-npm run evolve:genetic-params # Evolve AI parameters
 npm run train                 # Train ML models
 ```
 
@@ -62,7 +60,7 @@ npm run db:shell              # Database shell
 - **Dual AI System**: Classic minimax AI + ML neural network AI
 - **Offline Support**: PWA with full offline gameplay
 - **Cloudflare Deployment**: Production deployment with D1 database
-- **Comprehensive Testing**: 66+ tests passing, E2E coverage
+- **Comprehensive Testing**: 89+ tests passing, E2E coverage
 
 ### 🔄 Active Development
 
@@ -102,9 +100,9 @@ The game features a sophisticated dual AI system:
 
 ### ML AI (Neural Network)
 
-- **Architecture**: Value + policy networks
-- **Training**: Self-play with genetic algorithms
-- **Performance**: Creative, unpredictable playstyle
+- **Architecture**: 4x128 ResNet-lite value + policy networks
+- **Training**: Supervised learning from bitboard solver teacher
+- **Performance**: Creative, unpredictable playstyle (~2-4s/move)
 
 ### Performance Results
 
@@ -113,8 +111,6 @@ Latest AI matrix test results show:
 - **MM-Depth6**: 82.6% average win rate (strongest)
 - **MM-Depth3**: 45.7% average win rate (balanced)
 - **Heuristic**: 34.3% average win rate (educational)
-
-See **[AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md)** for detailed metrics.
 
 ## 🧪 Testing Strategy
 
@@ -144,7 +140,8 @@ npm run test:coverage     # Coverage report
 
 ### Runtime Performance
 
-- **AI Response**: < 20ms per move
+- **Classic AI Response**: < 20ms per move
+- **ML AI Response**: ~2-4s per move (4000 MCTS simulations)
 - **Game Loading**: < 2 seconds
 - **Offline Support**: Full functionality without network
 

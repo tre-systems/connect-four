@@ -24,10 +24,10 @@ This implementation stands out for several reasons:
 
 ### Frontend (`src/`)
 
-- **UI Components**: `src/components/` (React, Tailwind, Framer Motion)
+- **UI Components**: `src/components/` (React 19, Tailwind, Framer Motion)
 - **State Management**: `src/lib/game-store.ts` (Zustand + Immer)
 - **Game Logic**: `src/lib/game-logic.ts` (pure functions)
-- **AI Services**: `src/lib/wasm-ai-service.ts` (Classic AI), `src/lib/ml-ai-service.ts` (ML AI)
+- **AI Services**: `src/lib/wasm-ai-service.ts` (Handles both Classic and ML AI)
 - **Database**: `src/lib/actions.ts` (save games)
 - **Statistics**: `src/lib/stats-store.ts`
 
@@ -100,8 +100,11 @@ export const games = sqliteTable('games', {
   completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
   moveCount: integer('moveCount'),
   duration: integer('duration'),
+  clientHeader: text('clientHeader'),
   history: text('history', { mode: 'json' }),
-  gameType: text('gameType', { enum: ['classic', 'ml', 'watch'] }),
+  gameType: text('gameType', { enum: ['classic', 'ml', 'watch', 'heuristic'] })
+    .notNull()
+    .default('classic'),
 });
 ```
 
@@ -127,7 +130,7 @@ The game includes comprehensive statistics tracking:
 
 ### Frontend Deployment
 
-- **Platform**: Next.js on Cloudflare Pages
+- **Platform**: Next.js 15 on Cloudflare Pages
 - **Build**: `npm run build:cf`
 - **Domain**: `https://connect-4.tre.systems`
 

@@ -139,10 +139,10 @@ The game features sophisticated AI opponents with evolved genetic parameters:
 
 ### ML AI (Deep Neural Network + MCTS)
 
-- Uses a deep [256, 128, 64] neural network trained via supervision from the bitboard teacher
-- Integrates **Monte Carlo Tree Search (MCTS)** with 800 simulations per move
+- Uses a 4x128 ResNet-lite neural network trained via supervision from the bitboard teacher
+- Integrates **Monte Carlo Tree Search (MCTS)** with 4000 simulations per move
 - **Restored performance**: Plays strategically sound Connect Four without suicidal errors
-- **~700ms/move** "Thinking time" for deep tactical analysis
+- **~2-4s/move** "Thinking time" for deep tactical analysis (varies by hardware)
 - Provides a more creative and sophisticated opponent compared to pure minimax
 
 ### AI Performance Rankings

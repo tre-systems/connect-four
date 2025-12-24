@@ -4,39 +4,45 @@ This guide covers deploying and managing the Connect Four application on Cloudfl
 
 ## 🚀 Quick Deployment
 
-### One-Command Deployment
+### Recommended: Standard Deployment
+
+The most reliable way to deploy is using the automated script:
 
 ```bash
 npm run deploy
 ```
 
-This script handles:
+This script handles the entire pipeline:
 
-- Building WebAssembly assets
-- Building for Cloudflare
-- Running database migrations
-- Deploying to Cloudflare Workers
+1. Builds WebAssembly assets & bindings
+2. Generates Service Worker
+3. Builds the Next.js application (OpenNext)
+4. Applies pending D1 database migrations
+5. Deploys to Cloudflare Pages/Workers
 
-### Manual Deployment
+### Alternative: Quick Deploy
 
-```bash
-# 1. Build WASM assets
-npm run build:wasm-assets
-
-# 2. Build for Cloudflare
-npm run build:cf
-
-# 3. Run database migrations
-npm run db:migrate
-
-# 4. Deploy
-wrangler deploy
-```
-
-### Quick Deploy (Skip Tests)
+If you want to skip the custom script checks and just build/deploy:
 
 ```bash
 npm run deploy:quick
+```
+
+_Note: This runs `build:cf` (which includes WASM build) and `wrangler deploy`._
+
+### Manual / Debug Deployment
+
+If you need to step through the process manually:
+
+```bash
+# 1. Build everything (WASM + Frontend)
+npm run build:cf
+
+# 2. Run D1 migrations
+npm run db:migrate
+
+# 3. Deploy to Cloudflare
+wrangler deploy
 ```
 
 ## 📋 Prerequisites

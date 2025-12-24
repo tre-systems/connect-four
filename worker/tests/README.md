@@ -182,7 +182,7 @@ cargo test test_genetic_params_comparison
 
 ### **Performance Benchmarks**
 
-For the latest detailed performance results, see [AI-MATRIX-RESULTS.md](../../docs/AI-MATRIX-RESULTS.md).
+For the latest detailed performance results, check the artifacts in the brain directory.
 
 ### **Speed Categories**
 
@@ -194,7 +194,7 @@ For the latest detailed performance results, see [AI-MATRIX-RESULTS.md](../../do
 
 Based on test results:
 
-- **Production**: MM-3 (Depth 3) - Best overall performance (see [AI-MATRIX-RESULTS.md](../../docs/AI-MATRIX-RESULTS.md))
+- **Production**: MM-3 (Depth 3) - Best overall performance
 - **Real-time**: MM-1/2 - Very fast and suitable for interactive play
 - **ML Alternative**: PyTorch V5 - Strong ML performance
 - **Educational**: Heuristic AI - Good for understanding game strategy
