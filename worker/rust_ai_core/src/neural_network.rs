@@ -7,6 +7,7 @@ pub struct NetworkConfig {
     pub input_size: usize,
     pub hidden_sizes: Vec<usize>,
     pub output_size: usize,
+    pub use_skip_connections: bool,
 }
 
 impl NetworkConfig {
@@ -139,12 +140,18 @@ impl NeuralNetwork {
         let mut current = input.clone();
 
         for (i, layer) in self.layers.iter().enumerate() {
+            let prev = current.clone();
             if i == self.layers.len() - 1 {
                 // Final layer: linear only, no ReLU
                 current = layer.forward_linear(&current);
             } else {
                 // Hidden layers: linear + ReLU
                 current = layer.forward(&current);
+                
+                // Optional skip connection (ResNet style)
+                if self.config.use_skip_connections && current.len() == prev.len() {
+                    current = &current + &prev;
+                }
             }
         }
 
@@ -216,9 +223,15 @@ impl NeuralNetwork {
         let mut activations = vec![input.clone()];
         let mut linear_outputs = Vec::new();
 
-        // 1. Forward Pass (Hidden Layers: ReLU)
+        // 1. Forward Pass (Hidden Layers: ReLU + Optional Skip)
         for i in 0..num_layers - 1 {
-            let (activated, linear) = self.layers[i].forward_with_cache(&activations.last().unwrap());
+            let prev = activations.last().unwrap().clone();
+            let (mut activated, linear) = self.layers[i].forward_with_cache(&prev);
+            
+            if self.config.use_skip_connections && activated.len() == prev.len() {
+                activated = &activated + &prev;
+            }
+            
             activations.push(activated);
             linear_outputs.push(linear);
         }
@@ -269,7 +282,7 @@ impl NeuralNetwork {
 
         layer_gradients.push((weight_gradients, bias_gradients));
 
-        // 4. Backward Pass (Hidden Layers: with ReLU)
+        // 4. Backward Pass (Hidden Layers: with ReLU + Skip)
         for layer_idx in (0..num_layers - 1).rev() {
             let layer_input = &activations[layer_idx];
             let linear_output = &linear_outputs[layer_idx];
@@ -282,7 +295,13 @@ impl NeuralNetwork {
             );
 
             layer_gradients.push((wg, bg));
-            gradient = input_gradient;
+            
+            // If skip connection was used, gradient also flows directly to input
+            if self.config.use_skip_connections && layer_input.len() == self.layers[layer_idx].weights.shape()[1] {
+                gradient = &input_gradient + &gradient;
+            } else {
+                gradient = input_gradient;
+            }
         }
 
         layer_gradients.reverse();
@@ -346,6 +365,7 @@ mod tests {
             input_size: 10,
             hidden_sizes: vec![5, 3],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         assert_eq!(
@@ -398,6 +418,7 @@ mod tests {
             input_size: 10,
             hidden_sizes: vec![5, 3],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let network = NeuralNetwork::new(config);
@@ -410,6 +431,7 @@ mod tests {
             input_size: 3,
             hidden_sizes: vec![2],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let network = NeuralNetwork::new(config);
@@ -426,6 +448,7 @@ mod tests {
             input_size: 3,
             hidden_sizes: vec![2],
             output_size: 4,
+            use_skip_connections: false,
         };
 
         let network = NeuralNetwork::new(config);
@@ -444,6 +467,7 @@ mod tests {
             input_size: 2,
             hidden_sizes: vec![3],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let network = NeuralNetwork::new(config.clone());
@@ -469,6 +493,7 @@ mod tests {
             input_size: 2,
             hidden_sizes: vec![3],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let mut network = NeuralNetwork::new(config);
@@ -508,6 +533,7 @@ mod tests {
             input_size: 2,
             hidden_sizes: vec![3],
             output_size: 4,
+            use_skip_connections: false,
         };
 
         let mut network = NeuralNetwork::new(config);
@@ -593,6 +619,7 @@ mod tests {
             input_size: 2,
             hidden_sizes: vec![3],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let network = NeuralNetwork::new(config);
@@ -637,6 +664,7 @@ mod tests {
             input_size: 1,
             hidden_sizes: vec![4],
             output_size: 1,
+            use_skip_connections: false,
         };
 
         let mut network = NeuralNetwork::new(config);
@@ -682,5 +710,26 @@ mod tests {
         // to a local minimum where the output doesn't change significantly.
         // The loss decrease and reasonable final error are sufficient indicators
         // that the training process is working correctly.
+    }
+    #[test]
+    fn test_network_skip_connections() {
+        let config = NetworkConfig {
+            input_size: 2,
+            hidden_sizes: vec![2, 2], // Sizes match, should trigger skips
+            output_size: 1,
+            use_skip_connections: true,
+        };
+
+        let mut network = NeuralNetwork::new(config);
+        let input = Array1::from_vec(vec![1.0, 2.0]);
+        let target = Array1::from_vec(vec![0.5]);
+
+        // Forward pass should not panic
+        let output = network.forward(&input);
+        assert!(output[0].is_finite());
+
+        // Training step should not panic
+        let loss = network.train_step(&input, &target, 0.01);
+        assert!(loss >= 0.0);
     }
 }

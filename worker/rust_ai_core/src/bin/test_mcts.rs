@@ -16,7 +16,7 @@ fn main() {
         vec![1.0 / 7.0; 7]
     };
 
-    let (best_move, move_probs) = mcts.search(game_state, &value_fn, &policy_fn);
+    let (best_move, move_probs) = mcts.search(game_state, &value_fn, &policy_fn, 0.0, false);
 
     let duration = start.elapsed();
     println!("✅ MCTS completed in {:.3} seconds", duration.as_secs_f64());

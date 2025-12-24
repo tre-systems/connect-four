@@ -206,7 +206,7 @@ const fn bottom_mask(col: usize) -> u64 {
 
 
 pub struct Solver {
-    transposition_table: HashMap<u64, i8>, // Key -> Score (stored as i8 to save space)
+    transposition_table: HashMap<u64, (i8, u8)>, // Key -> (Score, Depth)
     nodes: u64,
     column_order: [usize; WIDTH],
 }
@@ -228,6 +228,10 @@ impl Solver {
 
     pub fn get_nodes_count(&self) -> u64 {
         self.nodes
+    }
+
+    pub fn tt_size(&self) -> usize {
+        self.transposition_table.len()
     }
 
     // Main entry point for searching
@@ -337,12 +341,10 @@ impl Solver {
 
         // Transposition Table Lookup
         let key = position.key();
-        if let Some(&_val) = self.transposition_table.get(&key) {
-             // Basic TT application: if we have a value...
-             // For a true solver, we store bounds. 
-             // To keep it simple and robust, we might just store value if depth is sufficient.
-             // But for now, let's skip complex TT logic to ensure correctness first, or add it carefully.
-             // Actually, for fixed depth search, TT is tricky.
+        if let Some(&(val, cached_depth)) = self.transposition_table.get(&key) {
+             if cached_depth >= depth as u8 {
+                 return val as i32;
+             }
         }
 
         // Move ordering: columns 3, 2, 4, 1, 5, 0, 6
@@ -376,7 +378,8 @@ impl Solver {
                 let score = -self.negamax(&next_pos, depth - 1, -beta, -alpha);
 
                 if score >= beta {
-                    return score; // Beta cutoff
+                    self.transposition_table.insert(key, (score as i8, depth as u8));
+                    return score; 
                 }
                 if score > alpha {
                     alpha = score;
@@ -384,8 +387,8 @@ impl Solver {
             }
         }
         
-        // Cache result in TT?
-        // self.transposition_table.insert(key, alpha as i8);
+        // Cache exact result
+        self.transposition_table.insert(key, (alpha as i8, depth as u8));
 
         alpha
     }

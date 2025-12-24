@@ -9,6 +9,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Instant;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::cell::RefCell;
+
+thread_local! {
+    static THREAD_SOLVER: RefCell<Solver> = RefCell::new(Solver::new());
+}
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct TrainingSample {
@@ -23,13 +28,13 @@ fn main() {
 
     // 1. Initialize Model
     let mut ml_ai = MLAI::new();
-    println!("✅ Model initialized with architecture [256, 128, 64]");
+    println!("✅ Model initialized with 4x128 ResNet-lite architecture");
 
     // 2. Load or Generate Dataset
-    const NUM_RAW_SAMPLES: usize = 100000; // Will be 200,000 with symmetry
-    const SOLVER_DEPTH: i32 = 12; // Good quality labels
+    const NUM_RAW_SAMPLES: usize = 250000; // Will be 500,000 with symmetry
+    const SOLVER_DEPTH: i32 = 12; 
     
-    let dataset_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../public/ml/data/training/dataset_p3.json");
+    let dataset_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../public/ml/data/training/dataset_p4.json");
     let mut dataset: Vec<(Vec<f32>, f32, Vec<f32>)>;
 
     if dataset_path.exists() {
@@ -50,7 +55,7 @@ fn main() {
             EARLY_GAME_RATIO * 100.0, MID_GAME_RATIO * 100.0, LATE_GAME_RATIO * 100.0);
         
         let progress_counter = AtomicUsize::new(0);
-        let progress_interval = NUM_RAW_SAMPLES / 50; // Log every 2%
+        let progress_interval = NUM_RAW_SAMPLES / 1000; // Log every 0.1%
         let gen_start = Instant::now();
         
         // Print initial progress immediately
@@ -58,8 +63,9 @@ fn main() {
         
         dataset = (0..NUM_RAW_SAMPLES)
             .into_par_iter()
-            .flat_map(|sample_idx| {
-                let mut solver = Solver::new();
+        .flat_map(|sample_idx| {
+            THREAD_SOLVER.with(|s| {
+                let mut solver = s.borrow_mut();
                 let mut state = GameState::new_random_first_player();
                 
                 // Curriculum Learning: determine game phase for this sample
@@ -85,15 +91,21 @@ fn main() {
                 }
 
                 let bitboard = Bitboard::from_game_state(&state);
-                let core_evals = solver.analyze_all(&bitboard, SOLVER_DEPTH);
                 
                 let count = progress_counter.fetch_add(1, Ordering::Relaxed);
+                
+                // Periodically reset solver if cache grows too large
+                if solver.tt_size() > 500_000 {
+                    solver.reset();
+                }
+
+                let core_evals = solver.analyze_all(&bitboard, SOLVER_DEPTH);
                 if count % progress_interval == 0 && count > 0 {
-                    let pct = (count * 100) / NUM_RAW_SAMPLES;
+                    let pct = (count as f32 * 100.0) / NUM_RAW_SAMPLES as f32;
                     let elapsed = gen_start.elapsed().as_secs_f32();
                     let rate = count as f32 / elapsed;
                     let remaining = (NUM_RAW_SAMPLES - count) as f32 / rate;
-                    eprintln!("   📈 Progress: {:3}% ({:5}/{} samples) | {:.1} samples/sec | ETA: {:.0}s", 
+                    eprintln!("   📈 Progress: {:5.1}% ({:6}/{} samples) | {:.1} samples/sec | ETA: {:.0}s", 
                         pct, count, NUM_RAW_SAMPLES, rate, remaining);
                 }
                 
@@ -106,7 +118,8 @@ fn main() {
                 
                 vec![(f_orig, v_orig, p_orig), (f_mirr, v_orig, p_mirr)]
             })
-            .collect();
+        })
+    .collect();
 
         let gen_duration = gen_start.elapsed();
         println!("✅ Dataset generation complete ({} samples). Duration: {:?}", dataset.len(), gen_duration);

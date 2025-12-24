@@ -35,21 +35,24 @@ pub struct MLAI {
 impl MLAI {
     pub fn new() -> Self {
         // Create networks with appropriate sizes for Connect Four
+        // Architecture: 4 hidden layers of 128 units with skip connections (ResNet-lite)
         let value_config = NetworkConfig {
             input_size: 100,
-            hidden_sizes: vec![256, 128, 64], // Deep Network
+            hidden_sizes: vec![128, 128, 128, 128],
             output_size: 1,
+            use_skip_connections: true,
         };
         let policy_config = NetworkConfig {
             input_size: 100,
-            hidden_sizes: vec![256, 128, 64], // Deep Network
+            hidden_sizes: vec![128, 128, 128, 128],
             output_size: 7,
+            use_skip_connections: true,
         };
 
         // Adaptive simulation count: 
-        // - Debug: 100 sims (fast enough for tests)
-        // - Release: 800 sims (production standard)
-        let simulations = if cfg!(debug_assertions) { 100 } else { 800 };
+        // - Debug: 200 sims
+        // - Release: 4000 sims (Enhanced for Final Tournament Strength)
+        let simulations = if cfg!(debug_assertions) { 200 } else { 4000 };
 
         MLAI {
             value_network: NeuralNetwork::new(value_config),
@@ -110,19 +113,17 @@ impl MLAI {
             policy_net.forward(&f.to_array()).to_vec()
         };
 
-        let (best_move, move_probs) = mcts.search(state.clone(), &value_fn, &policy_fn);
+        let (best_move, move_probs) = mcts.search(state.clone(), &value_fn, &policy_fn, 0.0, true);
 
         // Convert MCTS probs to diagnostics
         let mut move_evaluations = Vec::new();
         for &col in &valid_moves {
             let prob = move_probs[col as usize];
-            if prob > 0.0 {
-                move_evaluations.push(MLMoveEvaluation {
-                    column: col,
-                    score: prob, // Display visit probability as score
-                    move_type: "mcts_visit_prob".to_string(),
-                });
-            }
+            move_evaluations.push(MLMoveEvaluation {
+                column: col,
+                score: prob, // Display visit probability as score
+                move_type: "mcts_visit_prob".to_string(),
+            });
         }
         
         move_evaluations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());

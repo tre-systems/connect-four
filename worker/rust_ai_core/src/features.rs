@@ -19,66 +19,53 @@ impl GameFeatures {
         let current_player = state.current_player;
         let opponent = state.current_player.opponent();
 
+        // Plane 1: Current Player pieces (42 features)
         for col in 0..COLS {
             for row in 0..ROWS {
-                features[idx] = if state.board[col][row] == Cell::from_player(current_player) {
-                    1.0
-                } else if state.board[col][row] == Cell::from_player(opponent) {
-                    -1.0
-                } else {
-                    0.0
-                };
+                if state.board[col][row] == Cell::from_player(current_player) {
+                    features[idx] = 1.0;
+                }
                 idx += 1;
             }
         }
 
-        // Strategic features
-        // Normalize strategic features (approx scale to 0-10 range)
-        // Strategic features (Relative to current player)
-        features[42] = Self::center_control_score(state, current_player) as f32 / 10.0;
-        features[43] = Self::center_control_score(state, opponent) as f32 / 10.0;
-        
-        features[44] = Self::pieces_count(state, current_player) as f32 / 21.0; 
-        features[45] = Self::pieces_count(state, opponent) as f32 / 21.0;
-        
-        features[46] = Self::threat_score(state, current_player) as f32 / 100.0;
-        features[47] = Self::threat_score(state, opponent) as f32 / 100.0;
-        
-        features[48] = Self::mobility_score(state, current_player) as f32 / 10.0;
-        features[49] = Self::mobility_score(state, opponent) as f32 / 10.0;
-        
-        features[50] = Self::vertical_control_score(state, current_player) as f32 / 10.0;
-        features[51] = Self::vertical_control_score(state, opponent) as f32 / 10.0;
-        
-        features[52] = Self::horizontal_control_score(state, current_player) as f32 / 10.0;
-        features[53] = Self::horizontal_control_score(state, opponent) as f32 / 10.0;
-        
-        features[54] = Self::diagonal_control_score(state, current_player) as f32 / 10.0;
-        features[55] = Self::diagonal_control_score(state, opponent) as f32 / 10.0;
-        
-        features[56] = Self::blocking_score(state, current_player) as f32 / 10.0;
-        features[57] = Self::blocking_score(state, opponent) as f32 / 10.0;
-        
-        features[58] = Self::height_advantage_score(state, current_player) as f32 / 100.0;
-        features[59] = Self::height_advantage_score(state, opponent) as f32 / 100.0;
-        
-        features[60] = Self::material_balance(state, current_player) as f32;
-        
-        features[61] = Self::positional_advantage_score(state, current_player);
-        features[62] = Self::positional_advantage_score(state, opponent);
-        
-        features[63] = Self::endgame_evaluation(state, current_player);
-        features[64] = Self::endgame_evaluation(state, opponent);
-        
-        // Fill remaining features with zeros
-        for i in 65..SIZE {
-             features[i] = 0.0;
+        // Plane 2: Opponent pieces (42 features)
+        for col in 0..COLS {
+            for row in 0..ROWS {
+                if state.board[col][row] == Cell::from_player(opponent) {
+                    features[idx] = 1.0;
+                }
+                idx += 1;
+            }
         }
 
-        // Normalize features to ensure they're in reasonable bounds
-        for i in 0..SIZE {
-            features[i] = features[i].max(-20.0).min(20.0);
-        }
+        // 3. Strategic features (Relative to current player)
+        // Indices 84-98
+        features[idx] = Self::center_control_score(state, current_player) as f32 / 10.0; idx += 1;
+        features[idx] = Self::center_control_score(state, opponent) as f32 / 10.0; idx += 1;
+        
+        features[idx] = Self::pieces_count(state, current_player) as f32 / 21.0; idx += 1;
+        features[idx] = Self::pieces_count(state, opponent) as f32 / 21.0; idx += 1;
+        
+        features[idx] = Self::threat_score(state, current_player) as f32 / 100.0; idx += 1;
+        features[idx] = Self::threat_score(state, opponent) as f32 / 100.0; idx += 1;
+        
+        features[idx] = Self::mobility_score(state, current_player) as f32 / 10.0; idx += 1;
+        features[idx] = Self::mobility_score(state, opponent) as f32 / 10.0; idx += 1;
+        
+        features[idx] = Self::vertical_control_score(state, current_player) as f32 / 10.0; idx += 1;
+        features[idx] = Self::vertical_control_score(state, opponent) as f32 / 10.0; idx += 1;
+        
+        features[idx] = Self::horizontal_control_score(state, current_player) as f32 / 10.0; idx += 1;
+        features[idx] = Self::horizontal_control_score(state, opponent) as f32 / 10.0; idx += 1;
+        
+        features[idx] = Self::diagonal_control_score(state, current_player) as f32 / 10.0; idx += 1;
+        features[idx] = Self::diagonal_control_score(state, opponent) as f32 / 10.0; idx += 1;
+        
+        features[idx] = Self::blocking_score(state, current_player) as f32 / 10.0;
+
+        // Current player indication (Index 99)
+        features[99] = if current_player == Player::Player1 { 1.0 } else { -1.0 };
 
         GameFeatures { features }
     }
@@ -275,49 +262,6 @@ impl GameFeatures {
             }
         }
         blocks
-    }
-
-    fn height_advantage_score(state: &GameState, player: Player) -> i32 {
-        let mut score = 0;
-        for col in 0..COLS {
-            for row in 0..ROWS {
-                if state.board[col][row] == Cell::from_player(player) {
-                    // Higher pieces (lower row numbers) are more valuable
-                    score += ((ROWS - row) as f64 * state.genetic_params.row_height_weight) as i32;
-                }
-            }
-        }
-        score
-    }
-
-    fn material_balance(state: &GameState, player: Player) -> i32 {
-        let my_pieces = Self::pieces_count(state, player);
-        let their_pieces = Self::pieces_count(state, player.opponent());
-        my_pieces - their_pieces
-    }
-
-    fn positional_advantage_score(state: &GameState, player: Player) -> f32 {
-        let center_score = Self::center_control_score(state, player) as f32;
-        let height_score = Self::height_advantage_score(state, player) as f32;
-        let threat_score = Self::threat_score(state, player) as f32;
-
-        (center_score * state.genetic_params.center_control_weight as f32 + 
-         height_score * state.genetic_params.row_height_weight as f32 + 
-         threat_score * state.genetic_params.threat_weight as f32) / 100.0
-    }
-
-    fn endgame_evaluation(state: &GameState, player: Player) -> f32 {
-        let total_pieces =
-            Self::pieces_count(state, Player::Player1) + Self::pieces_count(state, Player::Player2);
-        let max_pieces = (ROWS * COLS) as i32;
-
-        if total_pieces > max_pieces * 3 / 4 {
-            // Endgame - focus on immediate threats
-            Self::threat_score(state, player) as f32 / 1000.0
-        } else {
-            // Opening/middlegame - focus on position
-            Self::positional_advantage_score(state, player)
-        }
     }
 }
 

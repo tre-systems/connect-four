@@ -73,13 +73,20 @@ impl MCTS {
         root_state: GameState,
         value_fn: &dyn Fn(&GameState) -> f32,
         policy_fn: &dyn Fn(&GameState) -> Vec<f32>,
+        temperature: f32,
+        add_noise: bool,
     ) -> (u8, Vec<f32>) {
         // Create root node
         let root_idx = self.add_node(root_state, None, 1.0);
 
         // Run simulations
-        for _ in 0..self.num_simulations {
+        for i in 0..self.num_simulations {
             self.simulate(root_idx, value_fn, policy_fn);
+            
+            // Add Dirichlet Noise to root priors for the first simulation (AlphaZero style)
+            if i == 0 && add_noise {
+                self.add_root_noise(root_idx);
+            }
         }
 
         // Get move probabilities
@@ -95,21 +102,78 @@ impl MCTS {
         }
 
         if total_visits > 0 {
-            for prob in &mut move_probs {
-                *prob /= total_visits as f32;
+            if temperature > 0.1 {
+                // Stochastic selection based on visit counts raised to 1/temp
+                for prob in &mut move_probs {
+                    *prob = (*prob as f32).powf(1.0 / temperature);
+                }
+                let new_total: f32 = move_probs.iter().sum();
+                for prob in &mut move_probs {
+                    *prob /= new_total;
+                }
+            } else {
+                // Deterministic selection: only the best move gets probability
+                let max_visits = move_probs.iter().cloned().fold(0.0, f32::max);
+                for prob in &mut move_probs {
+                    if *prob == max_visits && max_visits > 0.0 {
+                        *prob = 1.0;
+                    } else {
+                        *prob = 0.0;
+                    }
+                }
+                // Handle ties (rare but possible)
+                let sum: f32 = move_probs.iter().sum();
+                if sum > 1.0 {
+                    for prob in &mut move_probs {
+                        *prob /= sum;
+                    }
+                }
             }
         }
 
-        // Select best move based on visit counts (which are in move_probs)
-        // move_probs indices correspond to columns (moves)
-        let best_move = move_probs
-            .iter()
-            .enumerate()
-            .max_by(|(_, &a), (_, &b)| a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(index, _)| index as u8)
-            .unwrap_or(0);
+        // Select move based on the transformed probabilities
+        let mut rng = rand::thread_rng();
+        let r: f32 = rand::Rng::gen(&mut rng);
+        let mut cumulative = 0.0;
+        let mut best_move = 0;
+
+        for (i, &prob) in move_probs.iter().enumerate() {
+            cumulative += prob;
+            if r <= cumulative {
+                best_move = i as u8;
+                break;
+            }
+            if i == move_probs.len() - 1 {
+                best_move = i as u8;
+            }
+        }
 
         (best_move, move_probs)
+    }
+
+    fn add_root_noise(&mut self, root_idx: usize) {
+        let n = self.nodes[root_idx].children.len();
+        if n == 0 { return; }
+
+        let children_indices: Vec<usize> = self.nodes[root_idx].children.clone();
+        
+        // Simple Dirichlet-like noise (alpha=0.3 for Connect Four branching factor)
+        const EPSILON: f32 = 0.25;
+        
+        let mut rng = rand::thread_rng();
+        let mut noise = vec![0.0; n];
+        let mut sum = 0.0;
+        for i in 0..n {
+            let val: f32 = rand::Rng::gen(&mut rng); 
+            noise[i] = val;
+            sum += val;
+        }
+
+        for i in 0..n {
+            let child_idx = children_indices[i];
+            let child = &mut self.nodes[child_idx];
+            child.prior_probability = (1.0 - EPSILON) * child.prior_probability + EPSILON * (noise[i] / sum);
+        }
     }
 
     fn simulate(
@@ -314,7 +378,7 @@ mod tests {
         let value_fn = |_state: &GameState| 0.0;
         let policy_fn = |_state: &GameState| vec![1.0 / 7.0; 7];
 
-        let (best_move, move_probs) = mcts.search(state, &value_fn, &policy_fn);
+        let (best_move, move_probs) = mcts.search(state, &value_fn, &policy_fn, 0.0, false);
 
         assert!(usize::from(best_move) < COLS);
         assert_eq!(move_probs.len(), COLS as usize);
