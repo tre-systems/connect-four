@@ -38,11 +38,14 @@ The model is trained using a **Supervised Learning** pipeline where the **Bitboa
 
 ### Training Status
 
-✅ **Supervised Training Complete (Dec 2024)**:
+✅ **Phase 2 Supervised Training Complete (Dec 2024)**:
 
-- **Model**: 50 epochs, 10,000 teacher samples
-- **Architecture**: [256, 128, 64]
-- **Verification**: Verified via `test_ai_matrix` against Solver teacher.
+- **Dataset**: 20,000 samples (10k raw + symmetry augmentation)
+- **Teacher Depth**: 12 (solver evaluations)
+- **Training**: 100 epochs with LR decay (0.001 → 0.0001 → 0.00001)
+- **Results**: Value Loss 0.033, Policy Loss 1.95
+- **Architecture**: [256, 128, 64] hidden layers
+- **Weights**: `public/ml/data/weights/ml_ai_weights_best.json`
 
 ## Available WASM AI Infrastructure
 
@@ -59,9 +62,9 @@ The codebase contains a robust Rust/WASM AI system:
 
 **Solution**:
 
-- Corrected MCTS update logic in `mcts.rs` to properly accumulate values.
-- Updated `ml_ai.rs` to negate NN evaluations when it's Player 2's turn.
-- Switched to a deeper [256, 128, 64] architecture for better tactical representation.
+- Made features **perspective-invariant** (Current Player = 1.0, Opponent = -1.0)
+- Simplified MCTS value function—no manual negation needed
+- Switched to a deeper [256, 128, 64] architecture for better tactical representation
 
 ## AI Performance Comparison
 
@@ -78,9 +81,10 @@ Based on Dec 2024 testing:
 
 ## Future Improvements
 
-1. **Curriculum Learning**: Progressively increase solver depth during training.
-2. **Larger Dataset**: Scale to 50k+ positions for even higher accuracy.
-3. **Self-Play Overlap**: Fine-tune the supervised model through reinforcement learning.
+1. **Deeper Teacher Labels**: Increase solver depth to 18+ for even higher quality training.
+2. **Larger Dataset**: Scale to 50k+ positions for better generalization.
+3. **Self-Play Fine-tuning**: Reinforce the supervised model through MCTS self-play.
+4. **Parallelize ML Performance Tests**: Use rayon for faster benchmarking.
 
 ## Troubleshooting
 
