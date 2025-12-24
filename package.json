@@ -39,7 +39,6 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:d1": "wrangler d1 migrations apply connect-four-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
-    "test:ai-matrix:md": "cd worker && cargo test test_ai_matrix -- --nocapture | node ../scripts/format-ai-matrix-md.cjs",
     "deploy": "./scripts/deploy.sh",
     "deploy:quick": "npm run build:cf && wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply connect-four-db --remote",

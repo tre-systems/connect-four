@@ -37,26 +37,9 @@ connect-four/
 
 ## AI Development
 
-### Genetic Algorithm Evolution
+### Genetic Parameters
 
-The project uses a genetic algorithm to evolve AI parameters for optimal gameplay. The parameters are pre-calculated and stored in `resources/ai/evolved.json`.
-
-#### Parameter Tracking
-
-The evolution process tracks:
-
-- **Parameters**: 14 genetic parameters plus fitness and diversity metrics
-- **Convergence**: Parameter changes between generations to show stability
-
-#### Expected Convergence Patterns
-
-- **Parameter stabilization**: Should occur after ~20-30 generations
-- **Fitness plateau**: Should reach 0.8-0.9 range
-- **Diversity decrease**: Population should converge over time
-
-#### Genetic Parameter IDs
-
-Genetic parameters use UUID-based identifiers (36 characters) for uniqueness and readability.
+The classic AI uses genetically-evolved evaluation parameters stored in `resources/ai/evolved.json`. These are pre-calculated and copied to `public/ml/data/genetic_params/` during build.
 
 ### AI Testing
 

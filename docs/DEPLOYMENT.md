@@ -94,7 +94,7 @@ zone_name = "tre.systems"
 [[d1_databases]]
 binding = "DB"
 database_name = "connect-four-db"
-database_id = "f3b432c2-1e6e-48ce-8bc2-d81b4c3f5b12"
+database_id = "15bf99a9-0f64-41a0-a895-361c1cf15757"
 preview_database_id = "connect-four-db-preview"
 migrations_dir = "migrations"
 ```
