@@ -2,7 +2,6 @@ use crate::genetic_params::GeneticParams;
 use serde::{Deserialize, Serialize};
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-#[cfg(feature = "wasm")]
 pub mod wasm_api;
 
 pub mod features;
@@ -16,7 +15,10 @@ pub const ROWS: usize = 6;
 pub const COLS: usize = 7;
 pub const BOARD_SIZE: usize = ROWS * COLS;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+use ts_rs::TS;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum Player {
     Player1 = 0,
@@ -32,7 +34,8 @@ impl Player {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum Cell {
     Empty,
@@ -57,7 +60,8 @@ impl Cell {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct GameState {
     pub board: [[Cell; ROWS]; COLS],
     pub current_player: Player,

@@ -26,6 +26,7 @@ wasm = [
     "getrandom/js",
     "dep:js-sys",
     "dep:web-sys",
+    "dep:serde-wasm-bindgen",
 ]
 training = []
 slow_tests = []
@@ -37,7 +38,7 @@ rand = { version = "0.8.5", features = ["getrandom"] }
 uuid = { version = "1.0", features = ["v4", "serde", "js"] }
 getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen = { version = "0.2.100", optional = true }
-serde-wasm-bindgen = "0.6.5"
+serde-wasm-bindgen = { version = "0.6.5", optional = true }
 console_error_panic_hook = { version = "0.1.7", optional = true }
 js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", optional = true, features = ["console"] }
@@ -46,6 +47,7 @@ ndarray = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 rayon = "1.8"
 tempfile = "3.8"
+ts-rs = "7.0.0"
 
 [profile.release]
 opt-level = 3

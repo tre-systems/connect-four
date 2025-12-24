@@ -136,7 +136,7 @@ export async function makeAIMove(
         const mlResponse = await wasmAI.getMLMove(gameState);
         response = {
           move: mlResponse.move,
-          evaluations: mlResponse.diagnostics?.moveEvaluations || mlResponse.diagnostics?.move_evaluations || [],
+          evaluations: [] as any[], // Casting to any[] or properly MoveEvaluationWasm[] if imported
           nodesEvaluated: 0,
           transpositionHits: 0,
         };
@@ -163,7 +163,7 @@ export async function makeAIMove(
       if (response.evaluations && response.evaluations.length > 0) {
         // Find the best score and type
         let maxScore = -Infinity;
-        response.evaluations.forEach(e => {
+        response.evaluations.forEach((e: { score: number; column: number; moveType: string }) => {
           if (typeof e.score === 'number' && e.score > maxScore) {
             maxScore = e.score;
           }
@@ -187,19 +187,24 @@ export async function makeAIMove(
     }
 
     console.error('WASM AI returned invalid move:', response.move);
-    
+
     // Fallback to classic AI if ML AI fails
     console.log('🤖 Falling back to classic AI...');
     try {
       const fallbackResponse = await wasmAI.getBestMove(gameState, 3);
-      if (fallbackResponse.move !== null && fallbackResponse.move !== undefined && fallbackResponse.move >= 0 && fallbackResponse.move < 7) {
+      if (
+        fallbackResponse.move !== null &&
+        fallbackResponse.move !== undefined &&
+        fallbackResponse.move >= 0 &&
+        fallbackResponse.move < 7
+      ) {
         console.log(`🤖 Classic AI fallback chose column ${fallbackResponse.move}`);
         return fallbackResponse.move;
       }
     } catch (fallbackError) {
       console.error('Classic AI fallback also failed:', fallbackError);
     }
-    
+
     // Last resort: pick first valid move
     const validMoves = getValidMoves(gameState.board);
     if (validMoves.length > 0) {
@@ -209,19 +214,24 @@ export async function makeAIMove(
     }
   } catch (error) {
     console.error('WASM AI failed:', error);
-    
+
     // Try classic AI as fallback
     try {
       console.log('🤖 Trying classic AI as fallback...');
       const fallbackResponse = await wasmAI.getBestMove(gameState, 3);
-      if (fallbackResponse.move !== null && fallbackResponse.move !== undefined && fallbackResponse.move >= 0 && fallbackResponse.move < 7) {
+      if (
+        fallbackResponse.move !== null &&
+        fallbackResponse.move !== undefined &&
+        fallbackResponse.move >= 0 &&
+        fallbackResponse.move < 7
+      ) {
         console.log(`🤖 Classic AI fallback chose column ${fallbackResponse.move}`);
         return fallbackResponse.move;
       }
     } catch (fallbackError) {
       console.error('Classic AI fallback failed:', fallbackError);
     }
-    
+
     // Last resort: pick first valid move
     const validMoves = getValidMoves(gameState.board);
     if (validMoves.length > 0) {
@@ -229,7 +239,7 @@ export async function makeAIMove(
       console.log(`🤖 Random fallback chose column ${randomMove}`);
       return randomMove;
     }
-    
+
     throw new Error(`AI calculation failed: ${error}`);
   }
 

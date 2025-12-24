@@ -1,72 +1,12 @@
 import { GameState } from './schemas';
-
-export interface WASMAIResponse {
-  move: number | null;
-  evaluations: Array<{
-    column: number;
-    score: number;
-    moveType: string;
-  }>;
-  nodesEvaluated: number;
-  transpositionHits: number;
-}
-
-export interface WASMHeuristicResponse {
-  move: number | null;
-  evaluations: Array<{
-    column: number;
-    score: number;
-    moveType: string;
-  }>;
-  nodesEvaluated: number;
-}
-
-export interface WASMMLResponse {
-  move: number | null;
-  evaluation: number;
-  thinking: string;
-  diagnostics: {
-    validMoves: number[];
-    moveEvaluations?: Array<{
-      column: number;
-      score: number;
-      moveType: string;
-    }>;
-    move_evaluations?: Array<{
-      column: number;
-      score: number;
-      moveType: string;
-    }>;
-    valueNetworkOutput: number;
-    policyNetworkOutputs: number[];
-  };
-}
+import type { WasmBestMoveResponse, WasmHeuristicResponse, WasmMLResponse } from './bindings';
 
 interface WASMAIInstance {
-  get_best_move: (
-    state: unknown,
-    depth: number
-  ) => {
-    move: number | null;
-    evaluations: Array<{
-      column: number;
-      score: number;
-      moveType: string;
-    }>;
-    nodes_evaluated: number;
-    transposition_hits: number;
-  };
-  get_heuristic_move: (state: unknown) => {
-    move: number | null;
-    evaluations: Array<{
-      column: number;
-      score: number;
-      moveType: string;
-    }>;
-    nodes_evaluated: number;
-  };
-  get_ml_move: (state: unknown) => unknown;
+  get_best_move: (state: unknown, depth: number) => WasmBestMoveResponse;
+  get_heuristic_move: (state: unknown) => WasmHeuristicResponse;
+  get_ml_move: (state: unknown) => WasmMLResponse;
   evaluate_position: (state: unknown) => number;
+  evaluate_position_ml: (state: unknown) => number;
   load_ml_weights: (value_weights: unknown, policy_weights: unknown) => void;
   clear_transposition_table: () => void;
   get_transposition_table_size: () => number;
@@ -82,6 +22,7 @@ class WASMAIService {
   private isLoaded = false;
   private loadPromise: Promise<void> | null = null;
 
+  // ... (initialize and _initialize methods same as before)
   async initialize(): Promise<void> {
     if (this.loadPromise) {
       return this.loadPromise;
@@ -177,10 +118,11 @@ class WASMAIService {
       vertical_control_weight: 2.862,
       horizontal_control_weight: 1.344,
       defensive_weight: 1.372,
+      horizontal_connection_weight: 1.344, // Added missing fields if needed or just keep generic map
     };
   }
 
-  async getBestMove(gameState: GameState, depth: number = 1): Promise<WASMAIResponse> {
+  async getBestMove(gameState: GameState, depth: number = 1): Promise<WasmBestMoveResponse> {
     if (!this.isLoaded || !this.ai) {
       throw new Error('WASM AI not loaded');
     }
@@ -189,100 +131,15 @@ class WASMAIService {
       const wasmState = await this.convertGameStateToWASM(gameState);
       const result = this.ai.get_best_move(wasmState, depth);
 
-      console.log('WASM AI: Raw result:', result);
-
-      // Handle both Map and regular object formats
-      let parsedResult;
-      if (result instanceof Map) {
-        parsedResult = {
-          move: result.get('move'),
-          evaluations: result.get('evaluations') || [],
-          nodes_evaluated: result.get('nodes_evaluated') || 0,
-          transposition_hits: result.get('transposition_hits') || 0,
-        };
-      } else {
-        parsedResult = result;
-      }
-
-      // Debug the evaluations structure
-      console.log('WASM AI: Parsed evaluations:', parsedResult.evaluations);
-      if (parsedResult.evaluations && parsedResult.evaluations.length > 0) {
-        console.log('WASM AI: First evaluation item:', parsedResult.evaluations[0]);
-        console.log(
-          'WASM AI: Evaluation item keys:',
-          Object.keys(parsedResult.evaluations[0] || {})
-        );
-      }
-
-      // Transform evaluations to match expected format
-      let transformedEvaluations: Array<{
-        column: number;
-        score: number;
-        moveType: string;
-      }> = [];
-      if (parsedResult.evaluations && Array.isArray(parsedResult.evaluations)) {
-        transformedEvaluations = parsedResult.evaluations.map(
-          (evaluation: unknown, index: number) => {
-            // Handle different possible structures
-            if (evaluation && typeof evaluation === 'object') {
-              // Handle Map objects (from WASM)
-              if (evaluation instanceof Map) {
-                return {
-                  column:
-                    evaluation.get('column') !== undefined
-                      ? (evaluation.get('column') as number)
-                      : index,
-                  score:
-                    evaluation.get('score') !== undefined
-                      ? (evaluation.get('score') as number)
-                      : (evaluation.get('value') as number) || 0,
-                  moveType:
-                    (evaluation.get('moveType') as string) ||
-                    (evaluation.get('type') as string) ||
-                    'normal',
-                };
-              }
-              // Handle regular objects
-              const evalObj = evaluation as Record<string, unknown>;
-              return {
-                column: evalObj.column !== undefined ? (evalObj.column as number) : index,
-                score:
-                  evalObj.score !== undefined
-                    ? (evalObj.score as number)
-                    : (evalObj.value as number) || 0,
-                moveType: (evalObj.moveType as string) || (evalObj.type as string) || 'normal',
-              };
-            } else if (typeof evaluation === 'number') {
-              // If it's just a number, assume it's the score for column index
-              return {
-                column: index,
-                score: evaluation,
-                moveType: 'normal',
-              };
-            } else {
-              return {
-                column: index,
-                score: 0,
-                moveType: 'normal',
-              };
-            }
-          }
-        );
-      }
-
-      return {
-        move: parsedResult.move,
-        evaluations: transformedEvaluations,
-        nodesEvaluated: parsedResult.nodes_evaluated || 0,
-        transpositionHits: parsedResult.transposition_hits || 0,
-      };
+      console.log('WASM AI: Result:', result);
+      return result;
     } catch (error) {
       console.error('WASM AI error:', error);
       throw new Error(`WASM AI failed: ${error}`);
     }
   }
 
-  async getHeuristicMove(gameState: GameState): Promise<WASMHeuristicResponse> {
+  async getHeuristicMove(gameState: GameState): Promise<WasmHeuristicResponse> {
     if (!this.isLoaded || !this.ai) {
       throw new Error('WASM AI not loaded');
     }
@@ -291,17 +148,13 @@ class WASMAIService {
       const wasmState = await this.convertGameStateToWASM(gameState);
       const result = this.ai.get_heuristic_move(wasmState);
 
-      return {
-        move: result.move,
-        evaluations: result.evaluations || [],
-        nodesEvaluated: result.nodes_evaluated || 0,
-      };
+      return result;
     } catch (error) {
       throw new Error(`WASM heuristic AI failed: ${error}`);
     }
   }
 
-  async getMLMove(gameState: GameState): Promise<WASMMLResponse> {
+  async getMLMove(gameState: GameState): Promise<WasmMLResponse> {
     if (!this.isLoaded || !this.ai) {
       throw new Error('WASM AI not loaded');
     }
@@ -311,39 +164,8 @@ class WASMAIService {
       const wasmState = await this.convertGameStateToWASM(gameState);
       console.log('🔍 ML AI: Calling WASM get_ml_move...');
       const result = this.ai.get_ml_move(wasmState);
-      console.log('🔍 ML AI: Raw result:', result);
-
-      // Convert Map to plain object if needed
-      let move: number | null;
-      let evaluation: number;
-      let thinking: string;
-      let diagnostics: WASMMLResponse['diagnostics'];
-
-      if (result instanceof Map) {
-        move = result.get('move') as number | null;
-        evaluation = result.get('evaluation') as number;
-        thinking = result.get('thinking') as string;
-        const rawDiagnostics = result.get('diagnostics');
-        diagnostics = rawDiagnostics as WASMMLResponse['diagnostics'];
-      } else {
-        const obj = result as Record<string, unknown>;
-        move = obj.move as number | null;
-        evaluation = obj.evaluation as number;
-        thinking = obj.thinking as string;
-        diagnostics = obj.diagnostics as WASMMLResponse['diagnostics'];
-      }
-
-      console.log('🔍 ML AI: Parsed move:', move);
-      console.log('🔍 ML AI: Parsed evaluation:', evaluation);
-      console.log('🔍 ML AI: Parsed thinking:', thinking);
-      console.log('🔍 ML AI: Parsed diagnostics:', diagnostics);
-
-      return {
-        move: move,
-        evaluation: evaluation,
-        thinking: thinking,
-        diagnostics: diagnostics,
-      };
+      console.log('🔍 ML AI: Result:', result);
+      return result;
     } catch (error) {
       console.error('🔍 ML AI: Error details:', error);
       throw new Error(`WASM ML AI failed: ${error}`);

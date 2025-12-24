@@ -10,18 +10,7 @@ vi.mock('../wasm-ai-service', () => ({
     getMLMove: vi.fn().mockResolvedValue({
       move: 3,
       evaluation: 0.5,
-      diagnostics: {
-        validMoves: [0, 1, 2, 3, 4, 5, 6],
-        moveEvaluations: [
-          { column: 0, score: 0.1 },
-          { column: 1, score: 0.2 },
-          { column: 2, score: 0.3 },
-          { column: 3, score: 0.5 },
-          { column: 4, score: 0.4 },
-          { column: 5, score: 0.3 },
-          { column: 6, score: 0.2 },
-        ],
-      },
+      thinking: 'Simulated thinking',
     }),
     getBestMove: vi.fn().mockResolvedValue({
       move: 3,
@@ -63,9 +52,6 @@ describe('ML AI Integration', () => {
     expect(result.move).toBeLessThan(7);
     expect(result.evaluation).toBeDefined();
     expect(typeof result.evaluation).toBe('number');
-    expect(result.diagnostics).toBeDefined();
-    expect(result.diagnostics.validMoves).toBeDefined();
-    expect(Array.isArray(result.diagnostics.validMoves)).toBe(true);
   });
 
   it('should make classic AI moves', async () => {

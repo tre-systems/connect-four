@@ -1,9 +1,56 @@
 use super::genetic_params::GeneticParams;
 use super::{GameState, HeuristicAI, AI};
 use super::ml_ai::MLAI;
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "wasm")]
+use wasm_bindgen::JsValue;
+#[cfg(feature = "wasm")]
 use serde_wasm_bindgen;
+use serde::{Serialize, Deserialize};
+use ts_rs::TS;
 
+// ... imports ...
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveEvaluationWasm {
+    pub column: u8,
+    pub score: f32,
+    pub move_type: String,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct WasmBestMoveResponse {
+    pub r#move: Option<u8>,
+    pub evaluations: Vec<MoveEvaluationWasm>,
+    pub nodes_evaluated: u32,
+    pub transposition_hits: u32,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct WasmHeuristicResponse {
+    pub r#move: Option<u8>,
+    pub evaluations: Vec<MoveEvaluationWasm>,
+    pub nodes_evaluated: u32,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct WasmMLResponse {
+    pub r#move: Option<u32>,
+    pub evaluation: f32,
+    pub thinking: String,
+    // Add other fields as needed, or simplify if full diagnostics arent always needed in TS
+}
+
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub struct ConnectFourAI {
     ai: AI,
@@ -11,6 +58,7 @@ pub struct ConnectFourAI {
     ml_ai: MLAI,
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl ConnectFourAI {
     #[wasm_bindgen(constructor)]
@@ -21,21 +69,26 @@ impl ConnectFourAI {
             ml_ai: MLAI::new(),
         }
     }
-
     pub fn get_best_move(&mut self, board_state: &JsValue, depth: u8) -> Result<JsValue, JsValue> {
         let state: GameState = serde_wasm_bindgen::from_value(board_state.clone())
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         let (best_move, evaluations) = self.ai.get_best_move(&state, depth);
 
-        let result = serde_json::json!({
-            "move": best_move,
-            "evaluations": evaluations,
-            "nodes_evaluated": self.ai.nodes_evaluated,
-            "transposition_hits": self.ai.transposition_hits,
-        });
+        let wasm_evaluations: Vec<MoveEvaluationWasm> = evaluations.into_iter().map(|e| MoveEvaluationWasm {
+            column: e.column,
+            score: e.score,
+            move_type: e.move_type,
+        }).collect();
 
-        Ok(serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))?)
+        let response = WasmBestMoveResponse {
+            r#move: best_move,
+            evaluations: wasm_evaluations,
+            nodes_evaluated: self.ai.nodes_evaluated,
+            transposition_hits: self.ai.transposition_hits,
+        };
+
+        Ok(serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 
     pub fn get_heuristic_move(&mut self, board_state: &JsValue) -> Result<JsValue, JsValue> {
@@ -44,13 +97,19 @@ impl ConnectFourAI {
 
         let (best_move, evaluations) = self.heuristic_ai.get_best_move(&state);
 
-        let result = serde_json::json!({
-            "move": best_move,
-            "evaluations": evaluations,
-            "nodes_evaluated": self.heuristic_ai.nodes_evaluated,
-        });
+        let wasm_evaluations: Vec<MoveEvaluationWasm> = evaluations.into_iter().map(|e| MoveEvaluationWasm {
+            column: e.column,
+            score: e.score,
+            move_type: e.move_type,
+        }).collect();
 
-        Ok(serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))?)
+        let response = WasmHeuristicResponse {
+            r#move: best_move,
+            evaluations: wasm_evaluations,
+            nodes_evaluated: self.heuristic_ai.nodes_evaluated,
+        };
+
+        Ok(serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 
     pub fn get_ml_move(&mut self, board_state: &JsValue) -> Result<JsValue, JsValue> {
@@ -67,34 +126,17 @@ impl ConnectFourAI {
         if valid_moves.is_empty() {
             return Err(JsValue::from_str("No valid moves available"));
         }
-
-        // Use ML AI's direct get_best_move method
         let ml_response = self.ml_ai.get_best_move(&state);
 
-        // Convert move_evaluations to the expected format
-        let move_evaluations: Vec<serde_json::Value> = ml_response.diagnostics.move_evaluations
-            .iter()
-            .map(|eval| serde_json::json!({
-                "column": eval.column,
-                "score": eval.score,
-                "moveType": eval.move_type
-            }))
-            .collect();
+        let response = WasmMLResponse {
+             r#move: ml_response.r#move.map(|m| m as u32),
+             evaluation: ml_response.evaluation,
+             thinking: ml_response.thinking,
+        };
 
-        let result = serde_json::json!({
-            "move": ml_response.r#move.map(|m| m as u32),
-            "evaluation": ml_response.evaluation,
-            "thinking": ml_response.thinking,
-            "diagnostics": {
-                "validMoves": ml_response.diagnostics.valid_moves,
-                "moveEvaluations": move_evaluations,
-                "valueNetworkOutput": ml_response.diagnostics.value_network_output,
-                "policyNetworkOutputs": ml_response.diagnostics.policy_network_outputs
-            }
-        });
-
-        Ok(serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
+// ...
 
     pub fn evaluate_position(&self, board_state: &JsValue) -> Result<f32, JsValue> {
         let state: GameState = serde_wasm_bindgen::from_value(board_state.clone())
@@ -185,7 +227,7 @@ impl ConnectFourAI {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_arch = "wasm32"))]
 mod tests {
     use super::*;
     use wasm_bindgen_test::*;
