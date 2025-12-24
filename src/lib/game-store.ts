@@ -70,9 +70,6 @@ export const useGameStore = create<GameStore>()(
           const { gameState } = get();
           if (gameState.gameStatus !== 'playing') return;
 
-          const playerName = gameState.currentPlayer === 'player1' ? 'Red' : 'Yellow';
-          console.log(`🎯 ${playerName} selecting column ${column}...`);
-
           // Set pending move for animation
           set(state => {
             state.pendingMove = { column, player: gameState.currentPlayer };
@@ -145,7 +142,6 @@ export const useGameStore = create<GameStore>()(
 
                       // If game is finished with a winner, delay showing the modal
                       if (newState.gameStatus === 'finished' && newState.winner) {
-                        // Don't show modal immediately - let the win animation play first
                         state.showWinnerModal = false;
                       }
                     });
@@ -234,8 +230,8 @@ export const useGameStore = create<GameStore>()(
       partialize: state => ({
         gameState: state.gameState,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export const useGameStoreActions = () => useGameStore(state => state.actions);

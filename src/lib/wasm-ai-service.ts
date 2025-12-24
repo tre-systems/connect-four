@@ -39,15 +39,11 @@ class WASMAIService {
     }
 
     try {
-      console.log('🔄 Loading WASM module...');
       const wasmModulePath = '/wasm/connect_four_ai_core.js';
-      console.log('🔄 Attempting to load WASM module from:', wasmModulePath);
 
       const wasmModule = (await import(/* webpackIgnore: true */ wasmModulePath)) as WASMModule;
 
-      console.log('🔄 WASM module imported, initializing...');
       await wasmModule.default();
-      console.log('🔄 WASM module initialized, creating AI instance...');
       this.ai = new wasmModule.ConnectFourAI();
       this.isLoaded = true;
       console.log('✅ WASM AI loaded successfully');
@@ -103,7 +99,6 @@ class WASMAIService {
       const wasmState = await this.convertGameStateToWASM(gameState);
       const result = this.ai.get_best_move(wasmState, depth);
 
-      console.log('WASM AI: Result:', result);
       return result;
     } catch (error) {
       console.error('WASM AI error:', error);
@@ -130,11 +125,8 @@ class WASMAIService {
     }
 
     try {
-      console.log('🔍 ML AI: Converting game state to WASM...');
       const wasmState = await this.convertGameStateToWASM(gameState);
-      console.log('🔍 ML AI: Calling WASM get_ml_move...');
       const result = this.ai.get_ml_move(wasmState);
-      console.log('🔍 ML AI: Result:', result);
       return result;
     } catch (error) {
       console.error('🔍 ML AI: Error details:', error);
@@ -186,7 +178,6 @@ class WASMAIService {
   }
 }
 
-// Singleton instance
 let wasmAIInstance: WASMAIService | null = null;
 
 export function getWASMAIService(): WASMAIService {
@@ -204,7 +195,6 @@ export async function initializeWASMAI(): Promise<void> {
   const service = getWASMAIService();
   await service.initialize();
 
-  // Try to load ML weights
   try {
     console.log('🔍 Loading ML weights from /ml/data/weights/ml_ai_weights_best.json...');
     const weightsResponse = await fetch('/ml/data/weights/ml_ai_weights_best.json');

@@ -680,7 +680,6 @@ impl AI {
     }
 
     pub fn get_transposition_table_size(&self) -> usize {
-        // self.solver.transposition_table.len() // Not exposed easily without getter?
         0
     }
 

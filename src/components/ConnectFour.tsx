@@ -44,8 +44,6 @@ export default function ConnectFour() {
     soundEffects.setEnabled(soundEnabled);
   }, [soundEnabled]);
 
-  useEffect(() => {}, []);
-
   useEffect(() => {
     const shouldMakeAIMove =
       gameState.gameStatus === 'playing' &&
@@ -141,7 +139,7 @@ export default function ConnectFour() {
                 window.open(
                   '/',
                   'GamePopout',
-                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
+                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no',
                 );
               }}
               className="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2 text-white/80 hover:text-white font-semibold shadow-lg backdrop-blur-md border border-white/10 transition-colors"

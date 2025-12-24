@@ -55,12 +55,6 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 - Enables true offline play without server dependencies
 - Simplified deployment and reduced attack surface
 
-**Preserved Infrastructure**:
-
-- Cloudflare Worker code remains in `worker/src/lib.rs` for potential future use
-- Server-side AI endpoints (`/ai-move`, `/health`) are inactive but available
-- Architecture supports easy reactivation if server-side features are needed
-
 ## Data Flow
 
 ### AI Turn Processing
@@ -146,31 +140,6 @@ Set in `public/_headers`:
   Cross-Origin-Embedder-Policy: require-corp
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-```
-
-## Preserved Server Infrastructure
-
-### Cloudflare Worker (`worker/src/lib.rs`)
-
-**Status**: Inactive (preserved for future use)
-
-**Available Endpoints**:
-
-- `POST /ai-move` - Server-side AI computation
-- `GET /health` - Health check endpoint
-
-**Potential Future Use Cases**:
-
-1. **Server-Side Validation**: Validate client moves in multiplayer
-2. **Analytics**: Collect AI performance metrics
-3. **Multiplayer Support**: Centralized AI for unreliable clients
-4. **AI Model Distribution**: Dynamic AI selection based on device capabilities
-
-**Reactivation**:
-
-```bash
-cd worker
-wrangler deploy
 ```
 
 ### Performance Considerations
