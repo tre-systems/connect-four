@@ -32,9 +32,10 @@ Please use Rust where you can, but use Python you must.
 Keep up to date documentation in the docs folder.
 Be rigorous in fixing warnings and errors.
 Try to keep documents concise and to the point, consolidate information where possible.
-When I just type 'rcp' that means "review all changes in each file, remove pointless comments, make sure changes have automated tests, run 'npm run check' fix any issues and analyse the results. If there are no issues or causes for concern, update relevant documentation and then 'git add -A' and commit and push all changed files."
-When I just type 'p' that means "proceed"
 Dont give me a list of options to choose, devise the best plan you can and proceed with it.
 Always run training and other long running scripts using caffeinate.
 Refer to this working game I made for inspiration or if you get stuck: https://github.com/rgilks/rgou-cloudflare
 When deleting temporary test files, consider how they might be integrated into more permanent tests.
+Code files should preferably be less than 200 lines long.
+Functions should preferably be less than 20 lines long.
+

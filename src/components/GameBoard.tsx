@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, Player } from '@/lib/types';
+import { GameState } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/lib/game-store';
 
@@ -13,6 +13,7 @@ import GameControls from './game/GameControls';
 import GameStatus from './game/GameStatus';
 import GamePiece from './game/GamePiece';
 import { soundEffects } from '@/lib/sound-effects';
+import { useGameAnimations } from '@/hooks/useGameAnimations';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -35,105 +36,22 @@ export default function GameBoard({
   watchMode = false,
   gameMode = 'human-vs-ai',
 }: GameBoardProps) {
-  const [celebrations, setCelebrations] = useState<
-    Array<{ id: string; position: { x: number; y: number }; player: Player }>
-  >([]);
-  const [droppingPieces, setDroppingPieces] = useState<
-    Array<{ id: string; column: number; row: number; player: Player }>
-  >([]);
-  const [showWinAnimation, setShowWinAnimation] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
-  const { actions, pendingMove, showWinnerModal } = useGameStore();
+  const { actions, showWinnerModal } = useGameStore();
+
+  const { celebrations, droppingPieces, showWinAnimation, handleWinAnimationComplete } =
+    useGameAnimations(gameState, boardRef);
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  React.useEffect(() => {
-    if (gameState.gameStatus === 'finished' && gameState.winner) {
-      // Handle game completion
-    }
-  }, [gameState.gameStatus, gameState.winner, actions]);
-
-  useEffect(() => {
-    if (gameState.gameStatus === 'finished' && gameState.winner) {
-      const boardRect = boardRef.current?.getBoundingClientRect();
-      if (boardRect) {
-        // eslint-disable-next-line
-        setCelebrations(prevCelebrations => [
-          ...prevCelebrations,
-          {
-            id: `celebration-${Date.now()}-${gameState.winner}`,
-            position: {
-              x: boardRect.left + boardRect.width / 2,
-              y: boardRect.top + boardRect.height / 2,
-            },
-            player: gameState.winner as Player,
-          },
-        ]);
-      }
-
-      // Show Connect Four win animation
-      if (gameState.winningLine) {
-        setShowWinAnimation(true);
-        // Play win animation sound
-        soundEffects.winAnimation();
-      }
-    }
-  }, [gameState.gameStatus, gameState.winner, gameState.winningLine]);
-
-  useEffect(() => {
-    celebrations.forEach(celebration => {
-      setTimeout(() => {
-        setCelebrations(prev => prev.filter(c => c.id !== celebration.id));
-      }, 3000);
-    });
-  }, [celebrations]);
-
-  // Handle dropping piece animations
-  useEffect(() => {
-    if (pendingMove) {
-      const { column, player } = pendingMove;
-
-      // Calculate the row where the piece will land
-      const col = gameState.board[column];
-      const row = col.lastIndexOf(null);
-      if (row === -1) return; // Column full
-
-      const dropId = `drop-${Date.now()}-${column}-${row}`;
-      // eslint-disable-next-line
-      setDroppingPieces(prev => [
-        ...prev,
-        {
-          id: dropId,
-          column,
-          row,
-          player,
-        },
-      ]);
-
-      // After animation completes, actually make the move
-      setTimeout(() => {
-        setDroppingPieces(prev => prev.filter(p => p.id !== dropId));
-        actions.completeMove();
-      }, 800);
-    }
-  }, [pendingMove, gameState, actions]);
 
   const handleColumnClick = (column: number) => {
     if (gameState.gameStatus === 'playing' && gameState.currentPlayer === 'player1' && !watchMode) {
       actions.makeMove(column);
       soundEffects.pieceMove();
     }
-  };
-
-  const handleWinAnimationComplete = () => {
-    setShowWinAnimation(false);
-    // Show the winner modal after the win animation completes
-    setTimeout(() => {
-      actions.showWinnerModal();
-    }, 500); // Small delay for smooth transition
   };
 
   const winningSet = new Set(
