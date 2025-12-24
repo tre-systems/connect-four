@@ -96,7 +96,12 @@ impl MLAI {
 
         let value_fn = |s: &GameState| -> f32 {
             let f = GameFeatures::from_game_state(s);
-            value_net.forward(&f.to_array())[0]
+            let val = value_net.forward(&f.to_array())[0];
+            if s.current_player == crate::Player::Player1 {
+                val
+            } else {
+                -val
+            }
         };
 
         let policy_fn = |s: &GameState| -> Vec<f32> {
@@ -125,7 +130,7 @@ impl MLAI {
             r#move: Some(best_move),
             evaluation: raw_value,
             thinking: format!(
-                "MCTS searched 200 sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
+                "MCTS searched 800 sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
                 best_move, move_probs[best_move as usize], raw_value
             ),
             diagnostics: MLDiagnostics {

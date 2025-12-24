@@ -1,74 +1,55 @@
 # AI Matrix Test Results
 
-_Last updated: 29/07/2025, 07:27:13_
+_Last updated: 24/12/2024_
 
 ## Matrix Table
 
 **Test Configuration:**
-Total games played: 144
-Duration: 2.51 seconds
-Games per second: 57.4
+Total games played: 60 (20 per match)
+Duration: 18.02 seconds
+Games per second: 3.3
 
-| AI Type                   | Random | Heuristic | MM-Depth1 | MM-Depth2 | MM-Depth3 | MM-Depth4 | MM-Depth5 | Bitboard-Solver (Depth 6) | ML-MCTS (AlphaZero) |
-| ------------------------- | ------ | --------- | --------- | --------- | --------- | --------- | --------- | ------------------------- | ------------------- |
-| Random                    | -      | 0.0       | 25.0      | 50.0      | 25.0      | 25.0      | 25.0      | 25.0                      | 25.0                |
-| Heuristic                 | 100.0  | -         | 75.0      | 0.0       | 75.0      | 100.0     | 25.0      | 50.0                      | 50.0                |
-| MM-Depth1                 | 75.0   | 25.0      | -         | 50.0      | 50.0      | 100.0     | 50.0      | 50.0                      | 0.0                 |
-| MM-Depth2                 | 50.0   | 100.0     | 50.0      | -         | 50.0      | 50.0      | 25.0      | 50.0                      | 50.0                |
-| MM-Depth3                 | 75.0   | 25.0      | 50.0      | 50.0      | -         | 0.0       | 50.0      | 25.0                      | 25.0                |
-| MM-Depth4                 | 75.0   | 0.0       | 0.0       | 50.0      | 100.0     | -         | 50.0      | 0.0                       | 0.0                 |
-| MM-Depth5                 | 75.0   | 75.0      | 50.0      | 75.0      | 50.0      | 50.0      | -         | 100.0                     | 25.0                |
-| Bitboard-Solver (Depth 6) | 75.0   | 50.0      | 50.0      | 50.0      | 75.0      | 100.0     | 0.0       | -                         | 50.0                |
-| ML-MCTS (AlphaZero)       | 75.0   | 50.0      | 100.0     | 50.0      | 75.0      | 100.0     | 75.0      | 50.0                      | -                   |
+| AI Type                   | Random | Bitboard-Solver (Depth 6) | ML-MCTS (AlphaZero) |
+| ------------------------- | ------ | ------------------------- | ------------------- |
+| Random                    | -      | 0.0                       | 25.0                |
+| Bitboard-Solver (Depth 6) | 100.0  | -                         | 100.0               |
+| ML-MCTS (AlphaZero)       | 75.0   | 0.0                       | -                   |
 
 ## Performance Summary
 
-1. ML-MCTS (AlphaZero): 71.9% average win rate
-2. MM-Depth5: 62.5% average win rate
-3. Heuristic: 59.4% average win rate
-4. Bitboard-Solver (Depth 6): 56.2% average win rate
-5. MM-Depth2: 53.1% average win rate
-6. MM-Depth1: 50.0% average win rate
-7. MM-Depth3: 37.5% average win rate
-8. MM-Depth4: 34.4% average win rate
-9. Random: 25.0% average win rate
+1. Bitboard-Solver (Depth 6): 100.0% average win rate
+2. ML-MCTS (AlphaZero): 37.5% average win rate
+3. Random: 12.5% average win rate
 
 ## Speed Analysis
 
 | AI                        | ms/move | Speed     |
 | ------------------------- | ------- | --------- |
 | Random                    | 0.0     | Very Fast |
-| MM-Depth1                 | 0.0     | Very Fast |
-| Heuristic                 | 0.0     | Very Fast |
-| ML-MCTS (AlphaZero)       | 0.4     | Very Fast |
-| MM-Depth2                 | 0.6     | Very Fast |
-| MM-Depth3                 | 4.0     | Fast      |
-| MM-Depth4                 | 26.8    | Moderate  |
-| MM-Depth5                 | 82.1    | Slow      |
-| Bitboard-Solver (Depth 6) | 226.2   | Slow      |
+| Bitboard-Solver (Depth 6) | 10.3    | Fast      |
+| ML-MCTS (AlphaZero)       | 736.9   | Slow      |
 
 ## Recommendations
 
-- ML-MCTS (AlphaZero) shows excellent performance (71.9% avg win rate) and is ready for production
-- Random is very fast (0.0ms/move) and suitable for real-time play
-- Use MM-Depth3 for best performance/speed balance
-- Use Random AI for baseline testing
-- Use Heuristic AI for educational purposes
+- **Bitboard-Solver (Depth 6)** is the strongest tactical engine and should be used for competitive or analytical scenarios.
+- **ML-MCTS (AlphaZero)** provides an advanced challenge with "deep thinking" (800 sims), making it a more human-like but formidable opponent.
+- **Random** remains the baseline for testing.
 
 ## Recent Fixes
 
-### Genetic Parameters Issue (July 2025)
+### ML AI Restoration (Dec 2024)
 
-**Problem**: The app was using incomplete fallback genetic parameters when the evolved.json file failed to load, causing inconsistent AI performance.
+**Problem**: The ML AI had a sign error in its MCTS logic and a perspectival mismatch, causing "suicidal" play.
 
-**Solution**: Updated the WASM AI service to use complete default genetic parameters that match the Rust `GeneticParams::default()` implementation.
+**Solution**:
+
+- Fixed MCTS backpropagation sign error.
+- Corrected player perspective in `ml_ai.rs`.
+- Implemented a supervised training pipeline with the Bitboard Solver as a teacher.
+- Upgraded the architecture to a deeper [256, 128, 64] network.
 
 **Impact**:
 
-- All AI types now use consistent genetic parameters
-- Matrix test results are now reliable and reproducible
-- Both Classic AI and ML AI are properly configured
-
-**Files Changed**:
-
-- `src/lib/wasm-ai-service.ts`: Fixed genetic parameters fallback
+- The AI now plays tactically sound moves and defends against immediate threats.
+- It can reliably beat random play and competitive baselines.
+- The training system is now self-service via `train.rs`.

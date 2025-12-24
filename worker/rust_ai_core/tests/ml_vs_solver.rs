@@ -14,7 +14,6 @@ mod tests {
     use serde_json;
 
     #[test]
-    #[ignore]
     fn benchmark_ml_vs_solver() {
         let mut ml_ai = MLAI::new();
         let mut solver = Solver::new();

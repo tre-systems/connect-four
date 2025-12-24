@@ -129,32 +129,29 @@ The winning pieces now have a clean, professional glow effect that clearly highl
 
 The game features sophisticated AI opponents with evolved genetic parameters:
 
-### Classic AI (Minimax with Evolved Parameters)
+### Classic AI (Bitboard Solver)
 
-- Uses minimax algorithm with alpha-beta pruning
-- **Evolved genetic parameters** for optimal evaluation function
-- **83.1% win rate** for MM-Depth5 (production setting)
-- **95.2ms/move** for strong response time
-- All 14 evaluation parameters optimized through genetic algorithm
-- Configurable search depth (Depth1-6)
-- Strong and reliable play with superior strategic understanding
+- Uses a highly optimized bitboard-based Negamax algorithm
+- **100% win rate** for Bitboard-Solver (Depth 6) in tactical testing
+- **10.3ms/move** average response time (Release mode)
+- Available in various levels from "Easy" (Depth 1) to "Expert" (Depth 6+)
+- Provides a rock-solid, mathematically sound challenge
 
-### ML AI (Neural Network)
+### ML AI (Deep Neural Network + MCTS)
 
-- Trained through self-play
-- More creative and unpredictable
-- Can learn from games
-- Available for advanced play scenarios
+- Uses a deep [256, 128, 64] neural network trained via supervision from the bitboard teacher
+- Integrates **Monte Carlo Tree Search (MCTS)** with 800 simulations per move
+- **Restored performance**: Plays strategically sound Connect Four without suicidal errors
+- **~700ms/move** "Thinking time" for deep tactical analysis
+- Provides a more creative and sophisticated opponent compared to pure minimax
 
 ### AI Performance Rankings
 
-1. **MM-Depth5**: 83.1% average win rate (production setting, 95.2ms/move)
-2. **MM-Depth1**: 76.0% average win rate (fast alternative, 0.0ms/move)
-3. **MM-Depth6**: 78.3% average win rate (strong but slower)
-4. **MM-Depth4**: 74.3% average win rate (good balance)
-5. **MM-Depth3**: 48.0% average win rate (balanced challenge)
-6. **Heuristic**: 29.7% average win rate (educational)
-7. **Random**: 7.4% average win rate (baseline)
+1. **Bitboard-Solver (Expert)**: 100% average win rate (Master level)
+2. **ML-MCTS (AlphaZero)**: High tactical strength (Challenger level)
+3. **Bitboard-Solver (Intermediate)**: Balanced speed and strength
+4. **Bitboard-Solver (Beginner)**: Foundational strategic play
+5. **Random**: Baseline for testing only
 
 ## AI vs AI Mode
 

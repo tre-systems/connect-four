@@ -297,6 +297,29 @@ impl Solver {
          (best_move, best_score)
     }
 
+    pub fn analyze_all(&mut self, position: &Bitboard, depth: i32) -> Vec<(usize, i32)> {
+        self.nodes = 0;
+        let mut evaluations = Vec::new();
+
+        for col in 0..WIDTH {
+            if position.can_play(col) {
+                let mut next_pos = *position;
+                next_pos.play(col);
+
+                if next_pos.is_win() {
+                    let score = (WIDTH * HEIGHT + 1 - next_pos.moves_count as usize) as i32 / 2;
+                    evaluations.push((col, score));
+                    continue;
+                }
+
+                let score = -self.negamax(&next_pos, depth - 1, -10000, 10000);
+                evaluations.push((col, score));
+            }
+        }
+
+        evaluations
+    }
+
     fn negamax(&mut self, position: &Bitboard, depth: i32, mut alpha: i32, mut beta: i32) -> i32 {
         self.nodes += 1;
 

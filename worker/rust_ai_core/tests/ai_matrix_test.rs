@@ -170,7 +170,7 @@ impl MLSimpleAI {
         let mut ai = MLAI::new();
 
         // Try to load simple model weights
-        let weights_path = "../../public/ml/data/weights/ml_ai_weights_simple.json";
+        let weights_path = "../../public/ml/data/weights/ml_ai_weights_best.json";
         if let Ok(weights_data) = std::fs::read_to_string(weights_path) {
             if let Ok(weights) = serde_json::from_str::<serde_json::Value>(&weights_data) {
                 if let (Some(value_network), Some(policy_network)) =
@@ -438,7 +438,6 @@ fn generate_recommendations(
 }
 
 #[test]
-#[ignore]
 fn test_ai_matrix() {
     optimize_cpu_usage();
     println!("🤖 AI Matrix Test - Comprehensive AI Comparison");
