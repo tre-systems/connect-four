@@ -2,11 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "types": [],
     "skipLibCheck": true,
@@ -24,19 +20,15 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": false,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "/wasm/*": [
-        "public/wasm/*"
-      ]
+      "@/*": ["src/*"],
+      "/wasm/*": ["public/wasm/*"]
     }
   },
   "include": [
@@ -48,8 +40,5 @@
     "dist/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "worker"
-  ]
+  "exclude": ["node_modules", "worker"]
 }
