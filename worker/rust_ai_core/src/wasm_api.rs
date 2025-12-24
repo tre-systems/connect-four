@@ -131,6 +131,10 @@ impl ConnectFourAI {
         }
         let ml_response = self.ml_ai.get_best_move(&state);
 
+        // ALWAYS log the thinking string to browser console for diagnostics
+        #[cfg(feature = "wasm")]
+        web_sys::console::log_1(&JsValue::from_str(&format!("🧠 ML AI: {}", ml_response.thinking)));
+
         let response = WasmMLResponse {
              r#move: ml_response.r#move.map(|m| m as u32),
              evaluation: ml_response.evaluation,
@@ -225,7 +229,30 @@ impl ConnectFourAI {
         let policy_weights: Vec<f32> = serde_wasm_bindgen::from_value(policy_weights.clone())
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
+        #[cfg(feature = "wasm")]
+        web_sys::console::log_1(&JsValue::from_str(&format!(
+            "📦 Loading ML Weights: Value={}, Policy={}", 
+            value_weights.len(), 
+            policy_weights.len()
+        )));
+
+        // Basic validation for 4x128 architecture
+        // Value: 62593 (100*128 + 128 + 3*(128*128 + 128) + 128*1 + 1)
+        // Policy: 63367 (100*128 + 128 + 3*(128*128 + 128) + 128*7 + 7)
+        if value_weights.len() != 62593 || policy_weights.len() != 63367 {
+             #[cfg(feature = "wasm")]
+             web_sys::console::warn_1(&JsValue::from_str(&format!(
+                "⚠️ ML Weight size mismatch! Expected V:62593 P:63367, Got V:{} P:{}", 
+                value_weights.len(), 
+                policy_weights.len()
+            )));
+        }
+
         self.ml_ai.load_weights(&value_weights, &policy_weights);
+        
+        #[cfg(feature = "wasm")]
+        web_sys::console::log_1(&JsValue::from_str("✅ ML weights applied to networks"));
+        
         Ok(())
     }
 }

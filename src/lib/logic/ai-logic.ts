@@ -8,7 +8,7 @@ export function otherPlayer(player: Player): Player {
 
 export async function makeAIMove(
   gameState: GameState,
-  aiType: 'classic' | 'ml' = 'classic'
+  aiType: 'classic' | 'ml' = 'classic',
 ): Promise<number> {
   const wasmAI = getWASMAIService();
 
@@ -30,9 +30,12 @@ export async function makeAIMove(
         break;
       case 'ml':
         const mlResponse = await wasmAI.getMLMove(gameState);
+        if (mlResponse.thinking) {
+          console.log(`🧠 ML AI Thinking: ${mlResponse.thinking}`);
+        }
         response = {
           move: mlResponse.move,
-          evaluations: [] as any[], // Casting to any[] or properly MoveEvaluationWasm[] if imported
+          evaluations: [] as any[],
           nodesEvaluated: 0,
           transpositionHits: 0,
         };
