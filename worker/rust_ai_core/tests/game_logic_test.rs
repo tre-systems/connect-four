@@ -1,4 +1,4 @@
-use connect_four_ai_core::{Cell, GameState, Player};
+use connect_four_ai_core::{Cell, GameState};
 
 #[test]
 fn test_game_logic() {

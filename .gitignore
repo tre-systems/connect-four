@@ -87,3 +87,4 @@ worker/rust_ai_core/ml/data/weights/*.json
 
 public/sw.js
 worker/rust_ai_core/bindings/
+public/ml/data/training/*.json

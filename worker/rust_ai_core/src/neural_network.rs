@@ -207,71 +207,102 @@ impl NeuralNetwork {
         self.layers.len()
     }
 
-    pub fn train_step(
-        &mut self,
+    pub fn compute_gradients(
+        &self,
         input: &Array1<f32>,
         target: &Array1<f32>,
-        learning_rate: f32,
-    ) -> f32 {
-        // Forward pass with caching
+    ) -> (f32, Vec<(Array2<f32>, Array1<f32>)>) {
+        let num_layers = self.layers.len();
         let mut activations = vec![input.clone()];
         let mut linear_outputs = Vec::new();
 
-        for layer in &self.layers {
-            let (activated, linear) = layer.forward_with_cache(&activations.last().unwrap());
+        // 1. Forward Pass (Hidden Layers: ReLU)
+        for i in 0..num_layers - 1 {
+            let (activated, linear) = self.layers[i].forward_with_cache(&activations.last().unwrap());
             activations.push(activated);
             linear_outputs.push(linear);
         }
 
-        // Calculate loss and initial gradient
-        let output = activations.last().unwrap();
-        let (loss, mut gradient) = if self.config.output_size == 1 {
-            // MSE loss for value network
-            let diff = output - target;
+        // 2. Forward Pass (Output Layer: Linear -> Tanh/Softmax)
+        let last_layer = &self.layers[num_layers - 1];
+        let last_linear = last_layer.forward_linear(&activations.last().unwrap());
+        let mut output = last_linear.clone();
+        
+        let (loss, gradient_wrt_linear) = if self.config.output_size == 1 {
+            // Value Network: Tanh activation
+            output.mapv_inplace(|x| x.tanh());
+            let diff = &output - target;
             let loss = diff.dot(&diff);
-            (loss, diff)
+            let mut grad = diff.clone();
+            for i in 0..grad.len() {
+                grad[i] *= 1.0 - output[i] * output[i];
+            }
+            (loss, grad)
         } else {
-            // Cross-entropy loss for policy network
+            // Policy Network: Softmax activation
+            output = self.softmax(&output);
             let epsilon = 1e-7;
             let mut ce_loss = 0.0;
-            let mut grad = Array1::zeros(output.len());
-
             for i in 0..output.len() {
-                let pred = output[i].max(epsilon).min(1.0 - epsilon);
-                let true_val = target[i];
-                ce_loss -= true_val * pred.ln();
-                grad[i] = pred - true_val;
+                let p = output[i].max(epsilon).min(1.0 - epsilon);
+                ce_loss -= target[i] * p.ln();
             }
+            let grad = &output - target;
             (ce_loss, grad)
         };
 
-        // Backward pass through layers
-        let num_layers = self.layers.len();
-        for layer_idx in (0..num_layers).rev() {
+        let mut layer_gradients = Vec::with_capacity(num_layers);
+
+        // 3. Backward Pass (Output Layer First)
+        let output_layer_idx = num_layers - 1;
+        let layer_input = &activations[output_layer_idx];
+        
+        let shape = self.layers[output_layer_idx].weights.shape();
+        let mut weight_gradients = Array2::zeros((shape[0], shape[1]));
+        for i in 0..shape[0] {
+            for j in 0..shape[1] {
+                weight_gradients[[i, j]] = layer_input[i] * gradient_wrt_linear[j];
+            }
+        }
+        let bias_gradients = gradient_wrt_linear.clone();
+        let mut gradient = gradient_wrt_linear.dot(&self.layers[output_layer_idx].weights.t());
+
+        layer_gradients.push((weight_gradients, bias_gradients));
+
+        // 4. Backward Pass (Hidden Layers: with ReLU)
+        for layer_idx in (0..num_layers - 1).rev() {
             let layer_input = &activations[layer_idx];
             let linear_output = &linear_outputs[layer_idx];
 
-            // Compute gradients for this layer
-            let (weight_gradients, bias_gradients, input_gradient) = self.compute_layer_gradients(
+            let (wg, bg, input_gradient) = self.compute_layer_gradients(
                 &self.layers[layer_idx],
                 layer_input,
                 linear_output,
                 &gradient,
             );
 
-            // Update weights and biases
-            self.layers[layer_idx].update_weights(
-                &weight_gradients,
-                &bias_gradients,
-                learning_rate,
-            );
-
-            // Propagate gradient to previous layer
-            if layer_idx > 0 {
-                gradient = input_gradient;
-            }
+            layer_gradients.push((wg, bg));
+            gradient = input_gradient;
         }
 
+        layer_gradients.reverse();
+        (loss, layer_gradients)
+    }
+
+    pub fn apply_gradients(&mut self, gradients: &Vec<(Array2<f32>, Array1<f32>)>, learning_rate: f32) {
+        for (i, (wg, bg)) in gradients.iter().enumerate() {
+            self.layers[i].update_weights(wg, bg, learning_rate);
+        }
+    }
+
+    pub fn train_step(
+        &mut self,
+        input: &Array1<f32>,
+        target: &Array1<f32>,
+        learning_rate: f32,
+    ) -> f32 {
+        let (loss, grads) = self.compute_gradients(input, target);
+        self.apply_gradients(&grads, learning_rate);
         loss
     }
 

@@ -2,7 +2,6 @@ use connect_four_ai_core::{
     ml_ai::MLAI,
     GameState,
     Player,
-    COLS,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -31,7 +30,6 @@ impl SmartRandomAI {
         // 2. Check for blocking move
         let opponent = state.current_player.opponent();
         for &col in &valid {
-            let mut next = state.clone();
             // Simulate opponent move at this column
             // We need to simulate: if we DON'T play here, can opponent win?
             // Actually, simplest is: play current player move, see if opponent wins? No.

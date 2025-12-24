@@ -7,7 +7,6 @@ mod tests {
         solver::Bitboard,
         GameState,
         Player,
-        COLS,
     };
     use std::fs;
     use std::path::PathBuf;

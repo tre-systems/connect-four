@@ -70,7 +70,11 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> Self {
-        Self::new_random_first_player()
+        GameState {
+            board: [[Cell::Empty; ROWS]; COLS],
+            current_player: Player::Player1,
+            genetic_params: GeneticParams::default(),
+        }
     }
 
     pub fn new_random_first_player() -> Self {
@@ -894,6 +898,8 @@ mod tests {
     #[test]
     fn test_make_move_simple() {
         let mut game_state = GameState::new();
+        // Ensure Player1 always moves first for this test
+        game_state.current_player = Player::Player1; 
         let first_player = game_state.current_player;
         assert!(game_state.make_move(3).is_ok());
         assert_eq!(

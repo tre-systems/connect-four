@@ -1,4 +1,5 @@
-use super::{Cell, GameState, Player, COLS, ROWS};
+use crate::{Cell, GameState};
+use super::{Player, COLS, ROWS};
 use ndarray::Array1;
 
 pub const SIZE: usize = 100;
@@ -352,11 +353,11 @@ mod tests {
         state.current_player = first_player;
         state.make_move(4).unwrap(); // First player places another piece
 
-        let features = GameFeatures::from_game_state(&state);
+        let _features = GameFeatures::from_game_state(&state);
 
         // Should have 2 pieces for the first player (Player1)
         // If current_player is P1, P1 pieces are at 44 (Current). If P2, P1 pieces are at 45 (Opponent).
-        let p1_pieces_idx = if state.current_player == Player::Player1 {
+        let _p1_pieces_idx = if state.current_player == Player::Player1 {
             44
         } else {
             45
@@ -368,7 +369,7 @@ mod tests {
     #[ignore]
     fn test_center_control_features() {
         let mut state = GameState::new();
-        let first_player = state.current_player;
+        let _first_player = state.current_player;
         state.make_move(3).unwrap(); // First player places in center
 
         let features = GameFeatures::from_game_state(&state);

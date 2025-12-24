@@ -46,6 +46,7 @@ fn get_evolved_params() -> GeneticParams {
         .unwrap_or_else(|_| GeneticParams::default())
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum AIType {
     Random,
@@ -81,6 +82,7 @@ impl AIType {
 
 trait AIPlayer {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize>;
+    #[allow(dead_code)]
     fn reset(&mut self);
 }
 
@@ -171,16 +173,15 @@ impl MLSimpleAI {
         let weights_path = "../../public/ml/data/weights/ml_ai_weights_best.json";
         if let Ok(weights_data) = std::fs::read_to_string(weights_path) {
             if let Ok(weights) = serde_json::from_str::<serde_json::Value>(&weights_data) {
-                if let (Some(value_network), Some(policy_network)) =
-                    (weights.get("value_network"), weights.get("policy_network"))
-                {
-                    // Extract weights from the network structure
-                    let value_weights = extract_weights_from_network(value_network);
-                    let policy_weights = extract_weights_from_network(policy_network);
+                if let (Some(v_obj), Some(p_obj)) = (weights.get("value_network"), weights.get("policy_network")) {
+                    if let (Some(v_weights_val), Some(p_weights_val)) = (v_obj.get("weights"), p_obj.get("weights")) {
+                        let value_weights: Vec<f32> = v_weights_val.as_array().expect("Value weights must be an array").iter().map(|v| v.as_f64().expect("Weight must be an f64") as f32).collect();
+                        let policy_weights: Vec<f32> = p_weights_val.as_array().expect("Policy weights must be an array").iter().map(|v| v.as_f64().expect("Weight must be an f64") as f32).collect();
 
-                    if !value_weights.is_empty() && !policy_weights.is_empty() {
-                        ai.load_weights(&value_weights, &policy_weights);
-                        println!("✅ Loaded simple model (297KB, 50 epochs, 1000 games)");
+                        if !value_weights.is_empty() && !policy_weights.is_empty() {
+                            ai.load_weights(&value_weights, &policy_weights);
+                            println!("✅ Successfully loaded Phase 3 weights from: {}", weights_path);
+                        }
                     }
                 }
             }
@@ -190,29 +191,6 @@ impl MLSimpleAI {
     }
 }
 
-fn extract_weights_from_network(network: &serde_json::Value) -> Vec<f32> {
-    let mut weights = Vec::new();
-
-    if let Some(layers) = network.as_object() {
-        for (layer_name, layer_data) in layers {
-            if layer_name.contains("weight") {
-                if let Some(weight_array) = layer_data.as_array() {
-                    for row in weight_array {
-                        if let Some(row_array) = row.as_array() {
-                            for weight in row_array {
-                                if let Some(weight_value) = weight.as_f64() {
-                                    weights.push(weight_value as f32);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    weights
-}
 
 impl AIPlayer for MLSimpleAI {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize> {
@@ -253,6 +231,7 @@ fn play_game(
     // Use evolved parameters for the game state
     let evolved_params = get_evolved_params();
     let mut game_state = GameState::with_genetic_params(evolved_params);
+    game_state.current_player = Player::Player1; // Force Player1 to move first
 
     // Use the intended first player (no random swapping)
     let actual_ai1_first = ai1_plays_first;

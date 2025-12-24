@@ -35,7 +35,12 @@ impl MCTSNode {
             return f32::INFINITY;
         }
 
-        let exploitation = self.total_value / self.visits as f32;
+        // Standard AlphaZero UCB: Q + U
+        // exploitation = average value for the player who moves TO this node (Parent).
+        // Since self.total_value is stored from THIS node's perspective, 
+        // we must negate it to get the parent's value.
+        let exploitation = -(self.total_value / self.visits as f32);
+        
         let exploration =
             exploration_constant * self.prior_probability * (parent_visits as f32).sqrt()
                 / (1.0 + self.visits as f32);
@@ -148,10 +153,8 @@ impl MCTS {
                 let relative_value = value_fn(&self.nodes[new_child_idx].state);
                 
                 // Update the new child node immediately
-                // We must store "Value for Parent" (which is -relative_value)
-                // because UCB maximizes the value for the chooser (Parent).
-                self.nodes[new_child_idx].visits += 1;
-                self.nodes[new_child_idx].total_value -= relative_value;
+                self.nodes[new_child_idx].visits = 1;
+                self.nodes[new_child_idx].total_value = relative_value;
                 
                 // Return NEGATED value to parent (Parent's perspective)
                 return -relative_value;
@@ -184,8 +187,7 @@ impl MCTS {
         
         // Update current node
         self.nodes[node_idx].visits += 1;
-        // We must store "Value for Parent" (which is -value, since `value` is for Self)
-        self.nodes[node_idx].total_value -= value;
+        self.nodes[node_idx].total_value += value;
         value
 
     }
@@ -298,7 +300,7 @@ mod tests {
 
         // Test visited node
         node.visits = 5;
-        node.total_value = 3.0;
+        node.total_value = -3.0; // Negative total_value means good for parent
         let score = node.ucb_score(1.0, 10);
         assert!(score.is_finite());
         assert!(score > 0.0);
