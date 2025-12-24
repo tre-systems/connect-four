@@ -16,7 +16,7 @@ cd ../..
 # Run the AI matrix test
 echo "🧪 Running AI Matrix Test..."
 cd worker/rust_ai_core
-cargo test test_ai_matrix -- --nocapture
+cargo test test_ai_matrix -- --ignored --nocapture
 cd ../..
 
 echo "✅ AI Comparison Tests Complete!" 

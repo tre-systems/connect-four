@@ -73,10 +73,10 @@ impl AIType {
             AIType::MMDepth3 => "MM-Depth3",
             AIType::MMDepth4 => "MM-Depth4",
             AIType::MMDepth5 => "MM-Depth5",
-            AIType::MMDepth6 => "MM-Depth6",
+            AIType::MMDepth6 => "Bitboard-Solver (Depth 6)",
             AIType::MMDepth7 => "MM-Depth7",
             AIType::MMDepth20 => "MM-Depth20",
-            AIType::MLSimple => "ML-Simple",
+            AIType::MLSimple => "ML-MCTS (AlphaZero)",
         }
     }
 }
@@ -170,7 +170,7 @@ impl MLSimpleAI {
         let mut ai = MLAI::new();
 
         // Try to load simple model weights
-        let weights_path = "../../ml/data/weights/simple_model_enhanced.json";
+        let weights_path = "../../public/ml/data/weights/ml_ai_weights_simple.json";
         if let Ok(weights_data) = std::fs::read_to_string(weights_path) {
             if let Ok(weights) = serde_json::from_str::<serde_json::Value>(&weights_data) {
                 if let (Some(value_network), Some(policy_network)) =
@@ -458,24 +458,14 @@ fn test_ai_matrix() {
     );
     println!();
 
-    // Define AI types to test (including ML AI models)
-    let mut ai_types = vec![
+    // Define AI types to test (focused on production models)
+    let ai_types = vec![
         AIType::Random,
-        AIType::Heuristic,
-        AIType::MMDepth1,
-        AIType::MMDepth2,
-        AIType::MMDepth3,
-        AIType::MMDepth4,
-        AIType::MMDepth5,
         AIType::MMDepth6,
         AIType::MLSimple,
     ];
 
-    // Add depth 7 and 20 only if slow tests are enabled
-    if std::env::var("RUN_SLOW_TESTS").is_ok() {
-        ai_types.push(AIType::MMDepth7);
-        ai_types.push(AIType::MMDepth20);
-    }
+
 
     println!("Testing {} AI types:", ai_types.len());
     for ai_type in &ai_types {

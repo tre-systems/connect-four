@@ -16,7 +16,10 @@ interface DroppingPiece {
   player: Player;
 }
 
-export function useGameAnimations(gameState: GameState, boardRef: React.RefObject<HTMLDivElement>) {
+export function useGameAnimations(
+  gameState: GameState,
+  boardRef: React.RefObject<HTMLDivElement | null>
+) {
   const [celebrations, setCelebrations] = useState<Celebration[]>([]);
   const [droppingPieces, setDroppingPieces] = useState<DroppingPiece[]>([]);
   const [showWinAnimation, setShowWinAnimation] = useState(false);

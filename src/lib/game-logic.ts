@@ -10,8 +10,8 @@ import {
 } from './logic/board-logic';
 import { makeAIMove, otherPlayer } from './logic/ai-logic';
 
+export type { WinningLine };
 export {
-  WinningLine,
   createEmptyBoard,
   printBoard,
   getValidMoves,

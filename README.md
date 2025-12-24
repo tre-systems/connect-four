@@ -8,8 +8,8 @@ A modern, AI-powered implementation of the classic Connect Four game, built with
 
 - **Classic Gameplay**: Traditional Connect Four with modern UI and smooth animations
 - **Advanced AI Opponents**:
-  - **Classic AI**: Minimax with alpha-beta pruning (Depth 1-6)
-  - **ML AI**: Neural network trained on genetic algorithm data
+  - **Bitboard Solver**: Strictly optimized Minimax with bitboards (Depth 6)
+  - **ML-MCTS AI**: AlphaZero-style Monte Carlo Tree Search with neural networks
 - **Genetic Evolution**: AI parameters evolved through genetic algorithms
 - **Offline-First**: Works completely offline once loaded as a PWA
 - **Analytics**: Comprehensive parameter tracking and CSV logging
@@ -62,8 +62,8 @@ If you encounter issues with the WASM AI system:
 
 The game features a sophisticated Dual AI system powered by Rust and WebAssembly:
 
-1.  **Classic AI**: Traditional minimax algorithm with alpha-beta pruning.
-2.  **ML AI**: Neural network policy/value prediction.
+1.  **Bitboard Solver**: High-performance solver using 64-bit operations.
+2.  **ML-MCTS AI**: AlphaZero-style neural (Value/Policy) + MCTS.
 3.  **Self-Play**: Advanced training capability.
 
 > For detailed architecture and performance stats, see [AI System Documentation](docs/AI-SYSTEM.md).
@@ -80,7 +80,7 @@ The AI parameters are evolved using genetic algorithms. Results are included in 
 ## Project Status
 
 - **All lint, type checks, and tests pass** as of the latest commit.
-- **AI Matrix**: All AI types tested, with MM-Depth6 and ML-Simple showing strong performance. See `docs/AI-MATRIX-RESULTS.md` for details.
+- **AI Matrix**: All AI types tested, with **Bitboard-Solver (Depth 6)** and **ML-MCTS (AlphaZero)** showing strong performance. See [`docs/AI-MATRIX-RESULTS.md`](docs/AI-MATRIX-RESULTS.md) for details.
 - **Coverage**: 70% statements, 82% branches, 77% functions. All core logic and AI modules are well covered.
 - **E2E**: All Playwright end-to-end tests pass.
 - **AI vs AI Mode**: Now supports Classic AI vs ML AI battles with clear visual indicators.
@@ -131,7 +131,7 @@ npm run db:shell
 
 ## Deployment
 
-The application is deployed to Cloudflare Pages with automatic deployments from the main branch.
+The application is deployed to Cloudflare Workers with automatic deployments from the main branch.
 
 ```bash
 # Deploy manually

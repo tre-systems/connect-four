@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { GameState } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/lib/game-store';

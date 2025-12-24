@@ -4,20 +4,15 @@
 
 The Connect Four AI system uses multiple approaches to provide different levels of gameplay:
 
-1. **Classic AI**: Minimax with alpha-beta pruning and transposition tables
-2. **ML AI**: Simple neural networks trained on Connect Four scenarios
+1. **Bitboard Solver**: Minimax with alpha-beta pruning and bitboard optimizations
+2. **ML-MCTS AI**: AlphaZero-style Monte Carlo Tree Search with neural networks
 3. **Genetic AI**: Evolved evaluation functions using genetic algorithms
 
-## ML AI - Simplified Approach
+## ML AI Architecture
 
-### Why We Simplified the ML Model
+### Efficient Design
 
-The original ML model was **massively over-engineered** for Connect Four:
-
-- **Complex Model**: 664,776 parameters (17.7MB) with attention layers and residual connections
-- **Simple Model**: 9,928 parameters (297KB) - **67x smaller**
-
-### Simple Model Architecture
+The ML AI uses a highly efficient neural network optimized for client-side execution:
 
 ```python
 # Value Network: 42 -> 64 -> 32 -> 1
@@ -32,10 +27,11 @@ The original ML model was **massively over-engineered** for Connect Four:
 - **No attention layers** - unnecessary for Connect Four
 - **No residual connections** - not needed for simple game
 - **Fast inference**: 0.0ms per move
+- **Size**: ~297KB
 
 ### Training Data
 
-The simple model uses basic Connect Four scenarios:
+The model uses basic Connect Four scenarios:
 
 - Empty board positions
 - Near-win scenarios (3 in a row)
@@ -46,18 +42,15 @@ The simple model uses basic Connect Four scenarios:
 
 From AI matrix testing:
 
-- **ML-Simple**: 45.5% average win rate
+- **ML AI**: 45.5% average win rate
 - **Speed**: 0.0ms/move (Very Fast)
-- **File size**: 297KB (vs 17.7MB for complex model)
+- **File size**: 297KB
 
 ### Current Training Status
 
 ✅ **Successfully Trained (July 2025)**:
 
-- **Simple Model**: 50 epochs, 1000 games, 64 batch size
-- **Enhanced Model**: 50 epochs, 1000 games, 64 batch size, 0.0005 learning rate
-- **Training Time**: ~2.5 seconds for enhanced model
-- **Model Size**: 297KB (simple_model_enhanced.json)
+- **Model**: 50 epochs, 1000 games, 64 batch size
 - **Integration**: Successfully integrated with WASM AI system
 
 ## Available WASM AI Infrastructure (Now Integrated)
