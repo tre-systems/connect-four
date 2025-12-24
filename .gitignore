@@ -23,8 +23,6 @@ worker/*.a
 worker/.zig-cache/
 worker/rust_ai_core/pkg/
 worker/rust_ai_core/target/
-worker/ml_ai_core/pkg/
-worker/ml_ai_core/target/
 worker/target/
 .open-next/
 
@@ -52,7 +50,6 @@ yarn-error.log*
 
 # env files
 .env*
-.env.local
 
 # Cloudflare
 .wrangler/
@@ -82,9 +79,6 @@ ml/scripts/pkg/
 temp_config.json
 temp_training_data.json
 test_pytorch_weights*.json
-
-# Training data directory
-~/Desktop/connect-four-training-data/
 
 
 /test_state.json

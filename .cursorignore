@@ -11,8 +11,6 @@ public/ml-weights.json.gz
 # Rust and WASM build artifacts
 worker/rust_ai_core/target/
 worker/rust_ai_core/pkg/
-worker/ml_ai_core/target/
-worker/ml_ai_core/pkg/
 worker/target/
 src/lib/wasm/
 public/wasm/
@@ -44,4 +42,3 @@ local.db
 .venv/
 .wrangler/
 .vercel/
-

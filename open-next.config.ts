@@ -1,33 +1,20 @@
 import { defineCloudflareConfig } from '@opennextjs/cloudflare';
 
-/**
- * @type {import("@opennextjs/cloudflare").OpenNextConfig}
- */
-const config = {
+const sharedOverride = {
+  converter: 'edge',
+  proxyExternalRequest: 'fetch',
+  tagCache: 'dummy',
+  queue: 'dummy',
+} as const;
+
+export default defineCloudflareConfig({
   default: {
-    override: {
-      wrapper: 'cloudflare-node',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-      tagCache: 'dummy',
-      queue: 'dummy',
-    },
+    override: { ...sharedOverride, wrapper: 'cloudflare-node' },
   },
-  assets: {
-    patterns: ['public/wasm/*'],
-  },
-  edgeExternals: ['node:crypto'],
   middleware: {
     external: true,
-    override: {
-      wrapper: 'cloudflare-edge',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-
-      tagCache: 'dummy',
-      queue: 'dummy',
-    },
+    override: { ...sharedOverride, wrapper: 'cloudflare-edge' },
   },
-};
-
-export default defineCloudflareConfig(config as any);
+  assets: { patterns: ['public/wasm/*'] },
+  edgeExternals: ['node:crypto'],
+} as any);
