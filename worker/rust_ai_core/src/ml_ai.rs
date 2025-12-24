@@ -50,9 +50,16 @@ impl MLAI {
         };
 
         // Adaptive simulation count: 
+        // - WASM (Browser): 1600 sims (Balanced for performance)
         // - Debug: 200 sims
-        // - Release: 4000 sims (Enhanced for Final Tournament Strength)
-        let simulations = if cfg!(debug_assertions) { 200 } else { 4000 };
+        // - Release (Native): 4000 sims (Maximum Strength)
+        let simulations = if cfg!(target_arch = "wasm32") {
+            1600
+        } else if cfg!(debug_assertions) {
+            200
+        } else {
+            4000
+        };
 
         MLAI {
             value_network: NeuralNetwork::new(value_config),
