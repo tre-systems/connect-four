@@ -49,16 +49,5 @@ rayon = "1.8"
 tempfile = "3.8"
 ts-rs = "7.0.0"
 
-[profile.release]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-panic = "abort"
-strip = true
-
-[profile.dev]
-opt-level = 1
-panic = "unwind"
-
 [dev-dependencies]
 criterion = "0.6.0"

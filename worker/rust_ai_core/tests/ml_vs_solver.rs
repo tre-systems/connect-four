@@ -33,12 +33,13 @@ mod tests {
             
         ml_ai.load_weights(&value_weights, &policy_weights);
         
-        let num_games = 20; // Run 20 games (Solver is slow)
-        let mut ml_wins = 0;
-        let mut draws = 0;
-        let mut losses = 0;
-        
-        // ML AI plays as Player 1 (needs to be aggressive) and Player 2 (needs to be defensive)
+        let num_games = 100; // Scaled for Confidence Audit
+        let mut ml_p1_wins = 0;
+        let mut ml_p1_draws = 0;
+        let mut ml_p1_losses = 0;
+        let mut ml_p2_wins = 0;
+        let mut ml_p2_draws = 0;
+        let mut ml_p2_losses = 0;
         
         for i in 0..num_games {
             let mut state = GameState::new();
@@ -66,21 +67,36 @@ mod tests {
             if let Some(winner) = state.get_winner() {
                 if (winner == Player::Player1 && ml_is_p1) || (winner == Player::Player2 && !ml_is_p1) {
                     println!("Result: ML WIN");
-                    ml_wins += 1;
+                    if ml_is_p1 { ml_p1_wins += 1; } else { ml_p2_wins += 1; }
                 } else {
                     println!("Result: ML LOSS");
-                    losses += 1;
+                    if ml_is_p1 { ml_p1_losses += 1; } else { ml_p2_losses += 1; }
                 }
             } else {
                 println!("Result: DRAW");
-                draws += 1;
+                if ml_is_p1 { ml_p1_draws += 1; } else { ml_p2_draws += 1; }
             }
         }
         
-        println!("Results vs Solver ({} games):", num_games);
-        println!("Wins: {}", ml_wins);
-        println!("Losses: {}", losses);
-        println!("Draws: {}", draws);
-        println!("Win/Draw Rate: {:.1}%", ((ml_wins + draws) as f32 / num_games as f32) * 100.0);
+        println!("\n📊 CONFIDENCE AUDIT RESULTS ({} games):", num_games);
+        println!("----------------------------------");
+        println!("ML as Player 1 (Aggressive):");
+        println!("  Wins:   {}", ml_p1_wins);
+        println!("  Draws:  {}", ml_p1_draws);
+        println!("  Losses: {}", ml_p1_losses);
+        println!("\nML as Player 2 (Defensive):");
+        println!("  Wins:   {}", ml_p2_wins);
+        println!("  Draws:  {}", ml_p2_draws);
+        println!("  Losses: {}", ml_p2_losses);
+        
+        let total_wins = ml_p1_wins + ml_p2_wins;
+        let total_draws = ml_p1_draws + ml_p2_draws;
+        let total_losses = ml_p1_losses + ml_p2_losses;
+        
+        println!("\nOVERALL TOTALS:");
+        println!("  Total Wins:   {}", total_wins);
+        println!("  Total Draws:  {}", total_draws);
+        println!("  Total Losses: {}", total_losses);
+        println!("  Win/Draw Rate: {:.1}%", ((total_wins + total_draws) as f32 / num_games as f32) * 100.0);
     }
 }
