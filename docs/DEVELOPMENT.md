@@ -38,57 +38,24 @@ connect-four/
 
 ### Genetic Algorithm Evolution
 
-The project uses a genetic algorithm to evolve AI parameters for optimal gameplay.
+The project uses a genetic algorithm to evolve AI parameters for optimal gameplay. The parameters are pre-calculated and stored in `resources/ai/evolved.json`.
 
-#### Running Evolution
+#### Parameter Tracking
 
-```bash
-# Run genetic parameter evolution
-npm run evolve:genetic-params
+The evolution process tracks:
 
-# Validate evolved parameters
-npm run validate:genetic-params
-```
-
-#### Parameter Tracking and Visualization
-
-The evolution process now generates comprehensive CSV files for analysis:
-
-- **Parameters file**: `evolution_params_YYYYMMDD_HHMMSS.csv`
-  - Tracks all parameter values, fitness, and diversity per generation
-  - Contains 14 genetic parameters plus fitness and diversity metrics
-
-- **Convergence file**: `evolution_convergence_YYYYMMDD_HHMMSS.csv`
-  - Tracks parameter changes between generations
-  - Shows convergence patterns and stability
-
-#### Plotting Evolution Results
-
-```bash
-# Plot evolution data
-python scripts/plot_evolution.py evolution_params_20241201_143022.csv evolution_convergence_20241201_143022.csv
-```
-
-This generates three visualization files:
-
-- `evolution_params_20241201_143022_parameters.png` - Parameter evolution over time
-- `evolution_convergence_20241201_143022_convergence.png` - Parameter changes
-- `evolution_params_20241201_143022_summary.png` - Convergence summary and analysis
+- **Parameters**: 14 genetic parameters plus fitness and diversity metrics
+- **Convergence**: Parameter changes between generations to show stability
 
 #### Expected Convergence Patterns
 
 - **Parameter stabilization**: Should occur after ~20-30 generations
 - **Fitness plateau**: Should reach 0.8-0.9 range
 - **Diversity decrease**: Population should converge over time
-- **Large parameter swings**: Indicate insufficient evaluation or poor mutation rates
 
 #### Genetic Parameter IDs
 
-Genetic parameters now use UUID-based identifiers (36 characters) instead of the previous long concatenated strings. This provides:
-
-- **Uniqueness**: Guaranteed unique identification
-- **Readability**: Much shorter and cleaner display
-- **Consistency**: Standard format across all operations
+Genetic parameters use UUID-based identifiers (36 characters) for uniqueness and readability.
 
 ### AI Testing
 
@@ -301,9 +268,6 @@ npm run dev
 
 # Test specific functionality
 npm run test:ai-comparison:fast
-
-# Analyze evolution results
-python scripts/plot_evolution.py <params_file> [convergence_file]
 
 # Monitor logs
 npm run logs

@@ -74,41 +74,18 @@ The codebase contains a complete Rust/WASM AI system that's now integrated:
 
 **Issue Fixed (July 2025)**: The minimax algorithm had a critical bug where deeper search depths were performing worse than shallow depths due to incorrect player perspective handling in the transposition table.
 
-**Solution**: 
+**Solution**:
+
 - Added player information to transposition table entries
 - Fixed evaluation score adjustment based on current player
 - Updated transposition table lookup to consider player perspective
 
 **Results**: Now deeper AIs perform better as expected:
+
 - MM-Depth6: 66.8% average win rate (best)
 - MM-Depth5: 61.2% average win rate
 - MM-Depth1: 58.8% average win rate
 - Random: 25.8% average win rate (worst)
-
-## Model File Management
-
-### Weight Cleaning
-
-Model files are kept small by separating training history:
-
-```bash
-# Clean weights (remove training_history)
-npm run clean:weights
-
-# Train simple model
-python3 ml/scripts/simple_train.py --epochs 20 --num-games 500
-```
-
-### File Structure
-
-```
-ml/data/weights/
-├── simple_model_enhanced.json          # Enhanced simple model (297KB)
-├── simple_model.json                   # Basic simple model (297KB)
-├── ml_ai_weights_simple.json          # Simple model (297KB)
-├── ml_ai_weights_simple_training_history.json  # Training data
-└── best_model.json                    # Current best model
-```
 
 ## AI Performance Comparison
 
@@ -125,30 +102,6 @@ Based on comprehensive testing:
 - **Real-time**: Use MM-Depth1 for speed
 - **ML**: Use simple model for lightweight AI
 - **Testing**: Use Random AI for baseline
-
-## Training Scripts
-
-### Simple Training
-
-```bash
-# Train basic simple model
-python3 ml/scripts/simple_train.py --epochs 20 --num-games 500
-
-# Train enhanced simple model
-python3 ml/scripts/simple_train.py --epochs 50 --num-games 1000 --batch-size 64 --learning-rate 0.0005 --output simple_model_enhanced.json
-
-# Clean existing weights
-python3 ml/scripts/clean_weights.py ml/data/weights/ml_ai_weights_intensive_13min.json
-```
-
-### Complex Training (Legacy)
-
-The complex training script (`train_self_play.py`) is kept for reference but not recommended for production use due to:
-
-- Unnecessary complexity (attention layers, residual connections)
-- Large model files (17.7MB vs 297KB)
-- Longer training times
-- No clear performance benefit
 
 ## Future Improvements
 

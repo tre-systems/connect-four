@@ -6,15 +6,15 @@ A modern, AI-powered implementation of the classic Connect Four game, built with
 
 ## Features
 
-- **Classic Gameplay**: Traditional Connect Four with modern UI
-- **AI Opponents**: Multiple AI difficulty levels powered by Rust/WASM
+- **Classic Gameplay**: Traditional Connect Four with modern UI and smooth animations
+- **Advanced AI Opponents**:
+  - **Classic AI**: Minimax with alpha-beta pruning (Depth 1-6)
+  - **ML AI**: Neural network trained on genetic algorithm data
 - **Genetic Evolution**: AI parameters evolved through genetic algorithms
-- **Parameter Tracking**: Comprehensive CSV logging and visualization of evolution
-- **Offline-First**: Works completely offline once loaded
-- **Mobile Optimized**: Responsive design for all devices
-- **PWA Support**: Install as a native app
-- **Elegant Win Animation**: Clean, professional highlighting of winning pieces
-- **Improved UI**: Compact start screen with AI icons and better visual hierarchy
+- **Offline-First**: Works completely offline once loaded as a PWA
+- **Analytics**: Comprehensive parameter tracking and CSV logging
+- **Game Modes**: Human vs AI, and AI vs AI (Watch Mode)
+- **Responsive**: Fully optimized for mobile and desktop
 
 ## Quick Start
 
@@ -60,72 +60,22 @@ If you encounter issues with the WASM AI system:
 
 ## AI System
 
-The game features a sophisticated AI system with multiple opponents to choose from:
+The game features a sophisticated Dual AI system powered by Rust and WebAssembly:
 
-- **Classic AI**: Traditional minimax algorithm with alpha-beta pruning. Fast and reliable.
-- **ML AI**: Neural network trained on genetic algorithm data. Balanced performance.
-- **Self-Play AI**: Advanced neural network trained through self-play with MCTS exploration. Most sophisticated.
+1.  **Classic AI**: Traditional minimax algorithm with alpha-beta pruning.
+2.  **ML AI**: Neural network policy/value prediction.
+3.  **Self-Play**: Advanced training capability.
 
-### WASM AI Integration
+> For detailed architecture and performance stats, see [AI System Documentation](docs/AI-SYSTEM.md).
 
-The AI system is powered by Rust/WASM for optimal performance:
+### Recent Updates
 
-- **Rust Core**: High-performance game logic and AI algorithms
-- **WASM Compilation**: Cross-platform compatibility with native performance
-- **ML Integration**: Neural network weights loaded dynamically
-- **Genetic Parameters**: Evolved parameters for heuristic evaluation
+- **WASM Integration**: Pure client-side execution for zero latency.
+- **Model Optimization**: ML models converted to efficient flat arrays.
 
-#### Recent Fixes (July 2025)
+### Genetic Evolution
 
-- ✅ **WASM Module Loading**: Fixed WASM compilation with proper feature flags
-- ✅ **ML Weights Format**: Converted complex model format to simple flat arrays
-- ✅ **Asset Serving**: Ensured all WASM assets are properly served
-- ✅ **Error Handling**: Added comprehensive fallback mechanisms
-- ✅ **Build Process**: Streamlined WASM build and asset deployment
-
-### AI Selection Interface
-
-Players can select their preferred AI opponent from a beautiful card-based interface that shows:
-
-- AI type and description
-- Performance characteristics
-- Visual indicators for selection
-
-### Genetic Algorithm Evolution
-
-The AI parameters are evolved using genetic algorithms:
-
-```bash
-# Run genetic parameter evolution
-npm run evolve:genetic-params
-
-# Plot evolution results
-python scripts/plot_evolution.py evolution_params_20241201_143022.csv
-```
-
-### Self-Play Training
-
-Advanced AI models are trained through self-play:
-
-```bash
-# Quick self-play training (100 games, 10 epochs)
-npm run train:self-play:quick
-
-# Standard self-play training (1000 games, 50 epochs)
-npm run train:self-play
-```
-
-### Simple ML Training
-
-Lightweight neural networks for fast, efficient AI:
-
-```bash
-# Train basic simple model (20 epochs, 500 games)
-python3 ml/scripts/simple_train.py --epochs 20 --num-games 500
-
-# Train enhanced simple model (50 epochs, 1000 games)
-python3 ml/scripts/simple_train.py --epochs 50 --num-games 1000 --batch-size 64 --learning-rate 0.0005 --output simple_model_enhanced.json
-```
+The AI parameters are evolved using genetic algorithms. Results are included in the release.
 
 ## Project Status
 
@@ -134,19 +84,6 @@ python3 ml/scripts/simple_train.py --epochs 50 --num-games 1000 --batch-size 64 
 - **Coverage**: 70% statements, 82% branches, 77% functions. All core logic and AI modules are well covered.
 - **E2E**: All Playwright end-to-end tests pass.
 - **AI vs AI Mode**: Now supports Classic AI vs ML AI battles with clear visual indicators.
-
-## Features
-
-### AI Opponents
-
-- **Classic AI**: Minimax + Alpha-Beta (Depth 5) - Plays with classic board game strategy for a strong challenge.
-- **ML AI**: Policy + Value Neural Network - Uses machine learning for fast, smart moves and adaptive play.
-
-### Game Modes
-
-- **Human vs AI**: Play against either Classic or ML AI
-- **AI vs AI**: Watch Classic AI battle ML AI with clear visual indicators
-- **Smooth Animations**: Enhanced animated background with no abrupt transitions
 
 ## Development
 
