@@ -17,9 +17,14 @@ fn main() {
     println!("✅ Model initialized with architecture [256, 128, 64]");
 
     // 2. Generate Dataset
-    const NUM_RAW_SAMPLES: usize = 25000; // Will be 50,000 with symmetry
-    println!("📊 Generating {} raw samples ({} total with symmetry) using Bitboard Solver (Depth 18)...", 
-        NUM_RAW_SAMPLES, NUM_RAW_SAMPLES * 2);
+    const NUM_RAW_SAMPLES: usize = 10000; // Will be 20,000 with symmetry (~20 min total)
+    const SOLVER_DEPTH: i32 = 12; // Balance of quality vs speed
+    println!("📊 Generating {} raw samples ({} total with symmetry) using Bitboard Solver (Depth {})...", 
+        NUM_RAW_SAMPLES, NUM_RAW_SAMPLES * 2, SOLVER_DEPTH);
+    
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let progress_counter = AtomicUsize::new(0);
+    let progress_interval = NUM_RAW_SAMPLES / 20; // Log every 5%
     
     let dataset: Vec<(Vec<f32>, f32, Vec<f32>)> = (0..NUM_RAW_SAMPLES)
         .into_par_iter()
@@ -43,8 +48,15 @@ fn main() {
 
             let bitboard = Bitboard::from_game_state(&state);
             
-            // Teacher Labels (Depth 18 for near-perfection)
-            let core_evals = solver.analyze_all(&bitboard, 18);
+            // Teacher Labels
+            let core_evals = solver.analyze_all(&bitboard, SOLVER_DEPTH);
+            
+            // Progress logging
+            let count = progress_counter.fetch_add(1, Ordering::Relaxed);
+            if count % progress_interval == 0 {
+                let pct = (count * 100) / NUM_RAW_SAMPLES;
+                eprintln!("   📈 Progress: {}% ({}/{} samples)", pct, count, NUM_RAW_SAMPLES);
+            }
             
             // --- Original State ---
             let f_orig = GameFeatures::from_game_state(&state).to_array().to_vec();

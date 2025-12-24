@@ -20,7 +20,7 @@ mod tests {
         
         // Load weights
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("ml/data/weights/ml_ai_weights_distilled.json");
+        path.push("../../public/ml/data/weights/ml_ai_weights_best.json");
         
         println!("Loading weights from: {:?}", path);
         let content = fs::read_to_string(&path).expect("Failed to read weights file");

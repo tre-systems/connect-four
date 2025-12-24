@@ -1,5 +1,8 @@
+#[cfg(feature = "wasm")]
 use super::genetic_params::GeneticParams;
+#[cfg(feature = "wasm")]
 use super::{GameState, HeuristicAI, AI};
+#[cfg(feature = "wasm")]
 use super::ml_ai::MLAI;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;

@@ -3,8 +3,6 @@ use std::collections::HashMap;
 
 const WIDTH: usize = 7;
 const HEIGHT: usize = 6;
-const MIN_SCORE: i32 = -(WIDTH as i32 * HEIGHT as i32) / 2 + 3;
-const MAX_SCORE: i32 = (WIDTH as i32 * HEIGHT as i32 + 1) / 2 - 3;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Bitboard {
@@ -205,9 +203,7 @@ const fn bottom_mask(col: usize) -> u64 {
     1 << (col * (HEIGHT + 1))
 }
 
-const fn column_mask(col: usize) -> u64 {
-    ((1 << HEIGHT) - 1) << (col * (HEIGHT + 1))
-}
+
 
 pub struct Solver {
     transposition_table: HashMap<u64, i8>, // Key -> Score (stored as i8 to save space)

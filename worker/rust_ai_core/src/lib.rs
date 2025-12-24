@@ -536,6 +536,7 @@ impl GameState {
         false
     }
 
+    #[allow(dead_code)]
     fn hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         for col in 0..COLS {
