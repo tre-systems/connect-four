@@ -96,7 +96,7 @@ impl MCTS {
 
         // Get move probabilities
         let root_node = &self.nodes[root_idx];
-        let mut move_probs = vec![0.0; COLS as usize];
+        let mut move_probs = vec![0.0; COLS];
         let mut total_visits = 0;
 
         for &child_idx in &root_node.children {
@@ -110,7 +110,7 @@ impl MCTS {
             if temperature > 0.1 {
                 // Stochastic selection based on visit counts raised to 1/temp
                 for prob in &mut move_probs {
-                    *prob = (*prob as f32).powf(1.0 / temperature);
+                    *prob = prob.powf(1.0 / temperature);
                 }
                 let new_total: f32 = move_probs.iter().sum();
                 for prob in &mut move_probs {
@@ -168,10 +168,10 @@ impl MCTS {
         let mut rng = rand::thread_rng();
         let mut noise = vec![0.0; n];
         let mut sum = 0.0;
-        for i in 0..n {
-            let val: f32 = rand::Rng::gen(&mut rng); 
-            noise[i] = val;
-            sum += val;
+        for val in noise.iter_mut().take(n) {
+            let r: f32 = rand::Rng::gen(&mut rng); 
+            *val = r;
+            sum += r;
         }
 
         for i in 0..n {

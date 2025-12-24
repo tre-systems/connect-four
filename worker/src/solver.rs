@@ -11,6 +11,12 @@ pub struct Bitboard {
     moves_count: u8,   // Number of moves played
 }
 
+impl Default for Bitboard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Bitboard {
     pub fn new() -> Self {
         Bitboard {
@@ -209,6 +215,12 @@ pub struct Solver {
     transposition_table: HashMap<u64, (i8, u8)>, // Key -> (Score, Depth)
     nodes: u64,
     column_order: [usize; WIDTH],
+}
+
+impl Default for Solver {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Solver {

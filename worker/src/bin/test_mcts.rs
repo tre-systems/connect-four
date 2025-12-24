@@ -20,8 +20,8 @@ fn main() {
 
     let duration = start.elapsed();
     println!("✅ MCTS completed in {:.3} seconds", duration.as_secs_f64());
-    println!("🎯 Best move: {}", best_move);
-    println!("📊 Move probabilities: {:?}", move_probs);
+    println!("🎯 Best move: {best_move}");
+    println!("📊 Move probabilities: {move_probs:?}");
 
     if duration.as_secs_f64() > 1.0 {
         println!("⚠️  MCTS is very slow!");

@@ -13,7 +13,7 @@ fn main() {
 
     for i in 0..1000 {
         if i % 100 == 0 {
-            println!("  Progress: {}/1000", i);
+            println!("  Progress: {i}/1000");
         }
         let _value = ai.evaluate_position(&game_state);
     }

@@ -30,7 +30,7 @@ fn main() {
     let input = match fs::read_to_string(input_file) {
         Ok(content) => content,
         Err(e) => {
-            eprintln!("Failed to read input file: {}", e);
+            eprintln!("Failed to read input file: {e}");
             process::exit(1);
         }
     };
@@ -38,7 +38,7 @@ fn main() {
     let game_state: GameState = match serde_json::from_str(&input) {
         Ok(state) => state,
         Err(e) => {
-            eprintln!("Invalid game state JSON: {}", e);
+            eprintln!("Invalid game state JSON: {e}");
             process::exit(1);
         }
     };
@@ -57,10 +57,10 @@ fn main() {
         }
         "evaluate" => {
             let evaluation = game_state.evaluate();
-            println!("{}", evaluation);
+            println!("{evaluation}");
         }
         _ => {
-            eprintln!("Unknown command: {}", command);
+            eprintln!("Unknown command: {command}");
             process::exit(1);
         }
     }

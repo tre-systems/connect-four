@@ -10,6 +10,8 @@ pub struct NetworkConfig {
     pub use_skip_connections: bool,
 }
 
+pub type LayerGradient = (Array2<f32>, Array1<f32>);
+
 impl NetworkConfig {
     pub fn total_weights(&self) -> usize {
         let mut total = 0;
@@ -218,7 +220,7 @@ impl NeuralNetwork {
         &self,
         input: &Array1<f32>,
         target: &Array1<f32>,
-    ) -> (f32, Vec<(Array2<f32>, Array1<f32>)>) {
+    ) -> (f32, Vec<LayerGradient>) {
         let num_layers = self.layers.len();
         let mut activations = vec![input.clone()];
         let mut linear_outputs = Vec::new();
@@ -238,7 +240,7 @@ impl NeuralNetwork {
 
         // 2. Forward Pass (Output Layer: Linear -> Tanh/Softmax)
         let last_layer = &self.layers[num_layers - 1];
-        let last_linear = last_layer.forward_linear(&activations.last().unwrap());
+        let last_linear = last_layer.forward_linear(activations.last().unwrap());
         let mut output = last_linear.clone();
         
         let (loss, gradient_wrt_linear) = if self.config.output_size == 1 {
@@ -308,7 +310,7 @@ impl NeuralNetwork {
         (loss, layer_gradients)
     }
 
-    pub fn apply_gradients(&mut self, gradients: &Vec<(Array2<f32>, Array1<f32>)>, learning_rate: f32) {
+    pub fn apply_gradients(&mut self, gradients: &[LayerGradient], learning_rate: f32) {
         for (i, (wg, bg)) in gradients.iter().enumerate() {
             self.layers[i].update_weights(wg, bg, learning_rate);
         }

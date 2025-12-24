@@ -1,9 +1,3 @@
----
-description:
-globs:
-alwaysApply: true
----
-
 Code should be as simple, concise and elegant as possible.
 Make sure we can elegantly handle errors, but don't overcomplicate error handling.
 NEVER ignore linting rules! fix the problems.
@@ -38,4 +32,3 @@ Refer to this working game I made for inspiration or if you get stuck: https://g
 When deleting temporary test files, consider how they might be integrated into more permanent tests.
 Code files should preferably be less than 200 lines long.
 Functions should preferably be less than 20 lines long.
-

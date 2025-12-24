@@ -99,7 +99,7 @@ mod tests {
         
         // Load weights
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("../../public/ml/data/weights/ml_ai_weights_best.json");
+        path.push("../public/ml/data/weights/ml_ai_weights_best.json");
         let content = fs::read_to_string(&path).expect("Failed to read weights");
         let json: serde_json::Value = serde_json::from_str(&content).unwrap();
         let v_w: Vec<f32> = json["value_network"]["weights"].as_array().unwrap().iter().map(|v| v.as_f64().unwrap() as f32).collect();

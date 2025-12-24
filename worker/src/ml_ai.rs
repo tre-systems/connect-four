@@ -39,6 +39,12 @@ pub struct MLAI {
     pub mcts_simulations: usize,
 }
 
+impl Default for MLAI {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MLAI {
     pub fn new() -> Self {
         // Create networks with appropriate sizes for Connect Four

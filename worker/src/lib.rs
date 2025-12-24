@@ -68,6 +68,12 @@ pub struct GameState {
     pub genetic_params: GeneticParams,
 }
 
+impl Default for GameState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameState {
     pub fn new() -> Self {
         GameState {
@@ -658,6 +664,12 @@ pub struct HeuristicAI {
     pub nodes_evaluated: u32,
 }
 
+impl Default for AI {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AI {
     pub fn new() -> Self {
         AI {
@@ -695,7 +707,7 @@ impl AI {
             3 => 10,
             5 => 14,
             _ => (depth as i32 + 4).min(20),
-        } as i32;
+        };
 
         let (best_move, score) = self.solver.analyze(&bitboard, engine_depth);
         
@@ -723,6 +735,12 @@ impl AI {
 
 }
 
+impl Default for HeuristicAI {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HeuristicAI {
     pub fn new() -> Self {
         HeuristicAI { nodes_evaluated: 0 }
@@ -744,23 +762,23 @@ impl HeuristicAI {
         // First, check for immediate wins
         for &col in &valid_moves {
             let mut next_state = state.clone();
-            if next_state.make_move(col).is_ok() {
-                if next_state.has_winner() && next_state.get_winner() == Some(state.current_player)
-                {
-                    // This move wins immediately - choose it!
-                    return (
-                        Some(col),
-                        vec![MoveEvaluation {
-                            column: col,
-                            score: if state.current_player == Player::Player1 {
-                                10000.0
-                            } else {
-                                -10000.0
-                            },
-                            move_type: "win".to_string(),
-                        }],
-                    );
-                }
+            if next_state.make_move(col).is_ok() 
+                && next_state.has_winner() 
+                && next_state.get_winner() == Some(state.current_player)
+            {
+                // This move wins immediately - choose it!
+                return (
+                    Some(col),
+                    vec![MoveEvaluation {
+                        column: col,
+                        score: if state.current_player == Player::Player1 {
+                            10000.0
+                        } else {
+                            -10000.0
+                        },
+                        move_type: "win".to_string(),
+                    }],
+                );
             }
         }
 
@@ -773,13 +791,12 @@ impl HeuristicAI {
                 let mut opponent_can_win = false;
                 for &opp_col in &opponent_moves {
                     let mut opp_next_state = next_state.clone();
-                    if opp_next_state.make_move(opp_col).is_ok() {
-                        if opp_next_state.has_winner()
-                            && opp_next_state.get_winner() == Some(state.current_player.opponent())
-                        {
-                            opponent_can_win = true;
-                            break;
-                        }
+                    if opp_next_state.make_move(opp_col).is_ok()
+                        && opp_next_state.has_winner()
+                        && opp_next_state.get_winner() == Some(state.current_player.opponent())
+                    {
+                        opponent_can_win = true;
+                        break;
                     }
                 }
                 if opponent_can_win {
@@ -825,11 +842,9 @@ impl HeuristicAI {
                         best_score = score;
                         best_move = col;
                     }
-                } else {
-                    if score < best_score {
-                        best_score = score;
-                        best_move = col;
-                    }
+                } else if score < best_score {
+                    best_score = score;
+                    best_move = col;
                 }
             }
         }

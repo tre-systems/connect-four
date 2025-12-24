@@ -22,7 +22,7 @@ fn main() {
             }
         }
     } else {
-        println!("❌ Failed to load weights from {}", weights_path);
+        println!("❌ Failed to load weights from {weights_path}");
         return;
     }
 
@@ -54,7 +54,7 @@ fn main() {
 }
 
 fn inspect_state(ai: &mut MLAI, state: &GameState, label: &str) {
-    println!("\n--- {} ---", label);
+    println!("\n--- {label} ---");
     print_board(state);
     
     let features = GameFeatures::from_game_state(state);

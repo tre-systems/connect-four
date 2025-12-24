@@ -10,7 +10,7 @@ const AI_OPTIONS = [
     aiType: 'classic' as AIType,
     title: 'Classic AI',
     description: 'A strategic opponent using minimax algorithm with alpha-beta pruning.',
-    subtitle: 'Minimax + Alpha-Beta (Depth 6)',
+    subtitle: 'Minimax + Alpha-Beta (Depth 14)',
     colorClass: 'text-blue-400',
     borderColorClass: 'border-blue-500/50',
     icon: '⚙️',
