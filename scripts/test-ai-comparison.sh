@@ -9,14 +9,14 @@ echo "🤖 Running AI Comparison Tests..."
 
 # Build the Rust core
 echo "🔨 Building Rust AI core..."
-cd worker/rust_ai_core
+cd worker
 cargo build
-cd ../..
+cd ..
 
 # Run the AI matrix test
 echo "🧪 Running AI Matrix Test..."
-cd worker/rust_ai_core
+cd worker
 cargo test test_ai_matrix -- --ignored --nocapture
-cd ../..
+cd ..
 
 echo "✅ AI Comparison Tests Complete!" 
