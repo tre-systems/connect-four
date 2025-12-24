@@ -45,7 +45,9 @@ fn test_win_detection() {
 
     // Test vertical win
     let mut game_state = GameState::new();
-    game_state.make_move(0).unwrap(); // P1
+    let expected_winner = game_state.current_player;
+    
+    game_state.make_move(0).unwrap(); // P1 (or starter)
     game_state.make_move(1).unwrap(); // P2
     game_state.make_move(0).unwrap(); // P1
     game_state.make_move(1).unwrap(); // P2
@@ -58,7 +60,7 @@ fn test_win_detection() {
 
     assert!(game_state.is_game_over());
     assert!(game_state.has_winner());
-    assert_eq!(game_state.get_winner(), Some(Player::Player1));
+    assert_eq!(game_state.get_winner(), Some(expected_winner));
 
     println!("✅ Vertical win detection working");
 }

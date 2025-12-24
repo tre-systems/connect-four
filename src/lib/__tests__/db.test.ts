@@ -13,7 +13,9 @@ vi.mock('drizzle-orm/better-sqlite3', () => ({
 }));
 
 vi.mock('better-sqlite3', () => ({
-  default: vi.fn(() => 'sqlite-instance'),
+  default: vi.fn(function () {
+    return 'sqlite-instance';
+  }),
 }));
 
 describe('Database', () => {

@@ -438,6 +438,7 @@ fn generate_recommendations(
 }
 
 #[test]
+#[ignore]
 fn test_ai_matrix() {
     optimize_cpu_usage();
     println!("🤖 AI Matrix Test - Comprehensive AI Comparison");

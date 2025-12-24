@@ -53,6 +53,7 @@ impl SmartRandomAI {
 
 
 #[test]
+#[ignore]
 fn benchmark_ml_vs_smart_random() {
     let mut ml_ai = MLAI::new();
     

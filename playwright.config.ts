@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3005',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
   },
 
@@ -22,8 +22,8 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
 
   webServer: {
-    command: 'NODE_ENV=development PORT=3005 npm run dev',
-    url: 'http://localhost:3005',
+    command: 'NODE_ENV=development PORT=3000 npm run dev',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
 });
