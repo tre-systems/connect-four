@@ -1,8 +1,6 @@
 {
   "id": "151de274-f5b5-4c03-9b99-ef1811fc69c0",
-  "parent_ids": [
-    "3f555210-be3e-413a-9772-bad8fd19f563"
-  ],
+  "parent_ids": ["3f555210-be3e-413a-9772-bad8fd19f563"],
   "generation": 2,
   "win_score": 5815,
   "loss_score": -9283,
