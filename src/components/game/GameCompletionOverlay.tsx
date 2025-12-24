@@ -58,8 +58,6 @@ export default function GameCompletionOverlay({
     return isPlayer1Winner ? Trophy : Zap;
   };
 
-  const IconComponent = getIcon();
-
   return (
     <motion.div
       className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
@@ -90,7 +88,7 @@ export default function GameCompletionOverlay({
             delay: 0.2,
           }}
         >
-          {!isDraw && IconComponent && (
+          {!isDraw && getIcon() && (
             <motion.div
               animate={{
                 rotate: [0, 10, -10, 0],
@@ -112,18 +110,24 @@ export default function GameCompletionOverlay({
                   delay: 0.5,
                 }}
               >
-                <IconComponent
-                  className={cn(
-                    'w-20 h-20 mx-auto mb-4 drop-shadow-lg',
-                    gameMode === 'ai-vs-ai'
-                      ? isPlayer1Winner
-                        ? 'text-red-400'
-                        : 'text-yellow-400'
-                      : isPlayer1Winner
-                        ? 'text-green-400'
-                        : 'text-pink-400'
-                  )}
-                />
+                {(() => {
+                  const Icon = getIcon();
+                  if (!Icon) return null;
+                  return (
+                    <Icon
+                      className={cn(
+                        'w-20 h-20 mx-auto mb-4 drop-shadow-lg',
+                        gameMode === 'ai-vs-ai'
+                          ? isPlayer1Winner
+                            ? 'text-red-400'
+                            : 'text-yellow-400'
+                          : isPlayer1Winner
+                            ? 'text-green-400'
+                            : 'text-pink-400'
+                      )}
+                    />
+                  );
+                })()}
               </motion.div>
             </motion.div>
           )}

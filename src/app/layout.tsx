@@ -17,18 +17,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Connect 4',
   description:
-          'Play the classic Connect 4 strategy game. Drop your pieces to get 4 in a row and challenge an AI opponent in this timeless game.',
+    'Play the classic Connect 4 strategy game. Drop your pieces to get 4 in a row and challenge an AI opponent in this timeless game.',
   keywords: [
     'board game',
-          'classic game',
-          'strategy game',
+    'classic game',
+    'strategy game',
     'strategy',
     'AI',
     'Connect 4',
     'PWA',
     'offline game',
   ],
-      authors: [{ name: 'Connect 4 Project' }],
+  authors: [{ name: 'Connect 4 Project' }],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -85,7 +85,7 @@ export default function RootLayout({
                               console.log('Banner should show!');
                               const updateBanner = document.createElement('div');
                               updateBanner.id = 'update-banner';
-                              updateBanner.innerHTML = "<div style=\\\"position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.97);color:#fff;padding:20px 24px 16px 24px;border-radius:18px;box-shadow:0 2px 16px rgba(0,0,0,0.18);z-index:10000;display:flex;flex-direction:column;align-items:center;gap:16px;font-family:system-ui;min-width:260px;max-width:90vw;\\\"><span style=\\\"font-size:16px;font-weight:500;text-align:center;line-height:1.4;margin-bottom:8px;\\\">A new version is available!</span><div style=\\\"display:flex;gap:12px;width:100%;justify-content:center;\\\"><button onclick=\\\"window.location.reload()\\\" style=\\\"background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:8px 20px;font-weight:600;cursor:pointer;font-size:15px;box-shadow:0 1px 4px rgba(56,189,248,0.15);transition:background 0.2s;\\\" onmouseover=\\\"this.style.background='#0ea5e9'\\\" onmouseout=\\\"this.style.background='#38bdf8'\\\">Update Now</button><button onclick=\\\"this.closest('#update-banner').remove()\\\" style=\\\"background:none;color:#fff;border:none;font-size:15px;text-decoration:underline;cursor:pointer;padding:8px 10px;\\\">Later</button></div></div>";
+                              updateBanner.innerHTML = "<div style='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.97);color:#fff;padding:20px 24px 16px 24px;border-radius:18px;box-shadow:0 2px 16px rgba(0,0,0,0.18);z-index:10000;display:flex;flex-direction:column;align-items:center;gap:16px;font-family:system-ui;min-width:260px;max-width:90vw;'><span style='font-size:16px;font-weight:500;text-align:center;line-height:1.4;margin-bottom:8px;'>A new version is available!</span><div style='display:flex;gap:12px;width:100%;justify-content:center;'><button onclick='window.location.reload()' style='background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:8px 20px;font-weight:600;cursor:pointer;font-size:15px;box-shadow:0 1px 4px rgba(56,189,248,0.15);transition:background 0.2s;' onmouseover='this.style.background=\\"#0ea5e9\\"' onmouseout='this.style.background=\\"#38bdf8\\"'>Update Now</button><button onclick='this.closest(\\"#update-banner\\").remove()' style='background:none;color:#fff;border:none;font-size:15px;text-decoration:underline;cursor:pointer;padding:8px 10px;'>Later</button></div></div>";
                               document.body.appendChild(updateBanner);
                             }
                           });

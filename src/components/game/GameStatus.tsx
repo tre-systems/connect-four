@@ -22,6 +22,7 @@ export default function GameStatus({
   const { player1AI, player2AI } = useGameStore();
 
   useEffect(() => {
+    // eslint-disable-next-line
     setIsMounted(true);
   }, []);
 

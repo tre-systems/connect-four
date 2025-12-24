@@ -3,13 +3,6 @@
  * Test script to verify WASM module loading in a browser-like environment
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 async function testWasmLoading() {
   try {
     console.log('🧪 Testing WASM module loading...');

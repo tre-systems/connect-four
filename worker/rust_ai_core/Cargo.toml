@@ -17,13 +17,6 @@ crate-type = ["cdylib", "rlib"]
 name = "connect-four-ai-core"
 path = "src/main.rs"
 
-[[bin]]
-name = "train"
-path = "src/bin/train.rs"
-
-[[bin]]
-name = "evolve_params"
-path = "src/bin/evolve_params.rs"
 
 [features]
 default = []

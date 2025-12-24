@@ -60,6 +60,7 @@ export default function GameBoard({
     if (gameState.gameStatus === 'finished' && gameState.winner) {
       const boardRect = boardRef.current?.getBoundingClientRect();
       if (boardRect) {
+        // eslint-disable-next-line
         setCelebrations(prevCelebrations => [
           ...prevCelebrations,
           {
@@ -101,7 +102,7 @@ export default function GameBoard({
       if (row === -1) return; // Column full
 
       const dropId = `drop-${Date.now()}-${column}-${row}`;
-
+      // eslint-disable-next-line
       setDroppingPieces(prev => [
         ...prev,
         {

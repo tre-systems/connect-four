@@ -1,0 +1,19 @@
+{
+  "id": "151de274-f5b5-4c03-9b99-ef1811fc69c0",
+  "parent_ids": ["3f555210-be3e-413a-9772-bad8fd19f563"],
+  "generation": 2,
+  "win_score": 5815,
+  "loss_score": -9283,
+  "center_column_value": 91,
+  "adjacent_center_value": 30,
+  "outer_column_value": 12,
+  "edge_column_value": 10,
+  "row_height_weight": 0.8908482908332641,
+  "center_control_weight": 1.4595863177569437,
+  "piece_count_weight": 0.11272567539417433,
+  "threat_weight": 3.851173801938288,
+  "mobility_weight": 1.1758489416617166,
+  "vertical_control_weight": 1.3345710338144683,
+  "horizontal_control_weight": 2.83967283813626,
+  "defensive_weight": 0.9924911934731036
+}

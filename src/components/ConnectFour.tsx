@@ -34,7 +34,9 @@ export default function ConnectFour() {
   const [showAISelection, setShowAISelection] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line
     setIsStandalone(isStandalonePWA());
+
     setIsMounted(true);
   }, []);
 

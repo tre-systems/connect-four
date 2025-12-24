@@ -10,8 +10,6 @@ pub mod genetic_params;
 pub mod mcts;
 pub mod ml_ai;
 pub mod neural_network;
-pub mod self_play;
-pub mod training;
 pub mod solver;
 
 pub const ROWS: usize = 6;

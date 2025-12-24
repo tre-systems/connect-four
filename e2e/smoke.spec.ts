@@ -8,18 +8,18 @@ async function dismissErrorModalIfPresent(page: Page) {
       console.log('Dismissing error modal...');
       await page.getByTestId('error-close-bottom').click();
       await page.waitForTimeout(200);
-      
+
       // Wait for modal to disappear
       await expect(errorModal).not.toBeVisible();
     }
-  } catch (error) {
+  } catch {
     // Error modal not present, continue
   }
 }
 
 async function startGame(page: Page) {
   await page.goto('/');
-  
+
   // Check if we're on the AI selection screen
   const aiSelectionPanel = page.getByTestId('ai-selection-classic');
   if (await aiSelectionPanel.isVisible()) {
@@ -27,7 +27,7 @@ async function startGame(page: Page) {
     await aiSelectionPanel.click();
     await page.waitForTimeout(600); // Wait for transition
   }
-  
+
   // The game board should now be visible
   await expect(page.getByTestId('game-board')).toBeVisible();
   // Wait for the animation to complete (0.5s duration + buffer)
@@ -35,7 +35,7 @@ async function startGame(page: Page) {
 
   // Dismiss any error modal that might appear due to WASM AI not loading in tests
   await dismissErrorModalIfPresent(page);
-  
+
   // Ensure no error modal is blocking interactions
   const errorModal = page.getByTestId('error-modal');
   await expect(errorModal).not.toBeVisible();
@@ -90,7 +90,7 @@ test.describe('Game Interactions', () => {
   test('can toggle sound settings', async ({ page }) => {
     // Ensure no error modal is blocking
     await dismissErrorModalIfPresent(page);
-    
+
     const soundToggle = page.getByTestId('toggle-sound');
     await expect(soundToggle).toBeVisible();
 
@@ -143,11 +143,11 @@ test.describe('Game Completion and Database Saves', () => {
 
     // Should return to AI selection screen
     await expect(page.getByTestId('ai-selection-classic')).toBeVisible();
-    
+
     // Select classic AI and start game again
     await page.getByTestId('ai-selection-classic').click();
     await page.waitForTimeout(600);
-    
+
     // Should return to game board
     await expect(page.getByTestId('game-board')).toBeVisible();
   });
@@ -203,7 +203,7 @@ test.describe('Error Handling and Edge Cases', () => {
 
     // Should be back to AI selection screen
     await expect(page.getByTestId('ai-selection-classic')).toBeVisible();
-    
+
     // Select classic AI and start game again
     await page.getByTestId('ai-selection-classic').click();
     await page.waitForTimeout(600);
