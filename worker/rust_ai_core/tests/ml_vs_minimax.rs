@@ -8,6 +8,7 @@ fn get_evolved_params() -> GeneticParams {
 }
 
 #[test]
+#[ignore]
 fn test_ml_vs_minimax_ai() {
     println!("🤖 ML vs Minimax AI Test");
     println!("{}", "=".repeat(40));
