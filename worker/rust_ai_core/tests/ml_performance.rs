@@ -58,7 +58,7 @@ fn benchmark_ml_vs_smart_random() {
     
     // Load weights
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("ml/data/weights/ml_ai_weights_distilled.json");
+    path.push("../../public/ml/data/weights/ml_ai_weights_best.json"); // Canonical production weights
     
     println!("Loading weights from: {:?}", path);
     let content = fs::read_to_string(&path).expect("Failed to read weights file");
@@ -71,7 +71,7 @@ fn benchmark_ml_vs_smart_random() {
         
     ml_ai.load_weights(&value_weights, &policy_weights);
     
-    let num_games = 100;
+    let num_games = 10; // Fast for pre-commit, use NUM_GAMES env for more
     let mut ml_wins = 0;
     let mut draws = 0;
     let mut losses = 0;

@@ -57,7 +57,7 @@ class WASMAIService {
 
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         console.error(
-          '❌ This might be a network issue - check if the WASM files are being served correctly'
+          '❌ This might be a network issue - check if the WASM files are being served correctly',
         );
       }
 
@@ -70,7 +70,7 @@ class WASMAIService {
       col.map(cell => {
         if (cell === null) return 'empty';
         return cell;
-      })
+      }),
     );
 
     const geneticParams = await this.loadGeneticParams();
@@ -206,8 +206,8 @@ export async function initializeWASMAI(): Promise<void> {
 
   // Try to load ML weights
   try {
-    console.log('🔍 Loading ML weights from /ml/data/weights/ml_ai_weights_simple.json...');
-    const weightsResponse = await fetch('/ml/data/weights/ml_ai_weights_simple.json');
+    console.log('🔍 Loading ML weights from /ml/data/weights/ml_ai_weights_best.json...');
+    const weightsResponse = await fetch('/ml/data/weights/ml_ai_weights_best.json');
     console.log('🔍 Weights response status:', weightsResponse.status, weightsResponse.ok);
 
     if (weightsResponse.ok) {

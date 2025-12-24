@@ -1,6 +1,6 @@
 use connect_four_ai_core::{
     features::GameFeatures, ml_ai::MLAI, solver::{Bitboard, Solver},
-    GameState, Player, COLS
+    GameState, COLS, ROWS
 };
 use ndarray::Array1;
 use rayon::prelude::*;
@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 fn main() {
-    println!("🚀 Starting ML AI Supervised Training Pipeline");
+    println!("🚀 Starting ML AI Supervised Training Pipeline - Phase 2 (Solver Parity)");
     let start_time = Instant::now();
 
     // 1. Initialize Model
@@ -17,17 +17,18 @@ fn main() {
     println!("✅ Model initialized with architecture [256, 128, 64]");
 
     // 2. Generate Dataset
-    const NUM_SAMPLES: usize = 10000;
-    println!("📊 Generating {} training samples using Bitboard Solver teacher...", NUM_SAMPLES);
+    const NUM_RAW_SAMPLES: usize = 25000; // Will be 50,000 with symmetry
+    println!("📊 Generating {} raw samples ({} total with symmetry) using Bitboard Solver (Depth 18)...", 
+        NUM_RAW_SAMPLES, NUM_RAW_SAMPLES * 2);
     
-    let dataset: Vec<(Vec<f32>, f32, Vec<f32>)> = (0..NUM_SAMPLES)
+    let dataset: Vec<(Vec<f32>, f32, Vec<f32>)> = (0..NUM_RAW_SAMPLES)
         .into_par_iter()
-        .map(|_| {
+        .flat_map(|_| {
             let mut solver = Solver::new();
             let mut state = GameState::new_random_first_player();
             
-            // Randomize board state a bit by playing some moves
-            let num_random_moves = rand::random::<usize>() % 15;
+            // Randomize board state more aggressively for diversity
+            let num_random_moves = rand::random::<usize>() % 25;
             for _ in 0..num_random_moves {
                 if state.is_game_over() { break; }
                 let moves = state.get_valid_moves();
@@ -36,48 +37,46 @@ fn main() {
                 let _ = state.make_move(mv);
             }
 
-            if state.is_game_over() { 
-                // If game ended, try again with fresh state
+            if state.is_game_over() || state.get_valid_moves().is_empty() { 
                 state = GameState::new_random_first_player();
             }
 
-            let features = GameFeatures::from_game_state(&state).to_array().to_vec();
             let bitboard = Bitboard::from_game_state(&state);
             
-            // Get teacher labels from Solver (depth 12 for high quality)
-            let evaluations = solver.analyze_all(&bitboard, 12);
+            // Teacher Labels (Depth 18 for near-perfection)
+            let core_evals = solver.analyze_all(&bitboard, 18);
             
-            // Value Label: Best score found
-            let mut best_score = -100.0;
-            let mut policy_scores = vec![-100.0; 7];
-            
-            for (col, score) in evaluations {
-                let norm_score = (score as f32).max(-10.0).min(10.0) / 10.0;
-                if norm_score > best_score {
-                    best_score = norm_score;
-                }
-                policy_scores[col] = (score as f32).max(-10.0).min(10.0);
-            }
-            
-            // Policy Label: Softmax over scores
-            let max_p = policy_scores.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
-            let exp_sum: f32 = policy_scores.iter().filter(|&&s| s > -50.0).map(|s| (s - max_p).exp()).sum();
-            let policy_label: Vec<f32> = policy_scores.iter().map(|&s| {
-                if s < -50.0 { 0.0 } else { (s - max_p).exp() / exp_sum }
-            }).collect();
+            // --- Original State ---
+            let f_orig = GameFeatures::from_game_state(&state).to_array().to_vec();
+            let (v_orig, p_orig) = process_labels(&core_evals);
 
-            (features, best_score, policy_label)
+            // --- Mirrored State ---
+            let mirrored_state = mirror_state(&state);
+            let f_mirr = GameFeatures::from_game_state(&mirrored_state).to_array().to_vec();
+            let p_mirr = mirror_policy(&p_orig);
+            
+            vec![(f_orig, v_orig, p_orig), (f_mirr, v_orig, p_mirr)]
         })
         .collect();
 
-    println!("✅ Dataset generation complete. Duration: {:?}", start_time.elapsed());
+    println!("✅ Dataset generation complete ({} samples). Duration: {:?}", dataset.len(), start_time.elapsed());
 
     // 3. Training Loop
-    println!("🧠 Starting Supervised Training...");
-    let learning_rate = 0.001;
-    let epochs = 50;
+    println!("🧠 Starting Phase 2 Training (100 Epochs with LR Decay)...");
+    let initial_lr = 0.001;
+    let epochs = 100;
+    let total_samples = dataset.len();
     
     for epoch in 1..=epochs {
+        // LR Schedule: Decay at 50% and 80% of training
+        let current_lr = if epoch > 80 {
+            initial_lr * 0.01
+        } else if epoch > 50 {
+            initial_lr * 0.1
+        } else {
+            initial_lr
+        };
+
         let mut total_value_loss = 0.0;
         let mut total_policy_loss = 0.0;
         
@@ -86,24 +85,67 @@ fn main() {
             
             // Train Value Network
             let v_target = Array1::from_vec(vec![*value_label]);
-            total_value_loss += ml_ai.value_network.train_step(&input, &v_target, learning_rate);
+            total_value_loss += ml_ai.value_network.train_step(&input, &v_target, current_lr);
             
             // Train Policy Network
             let p_target = Array1::from_vec(policy_label.clone());
-            total_policy_loss += ml_ai.policy_network.train_step(&input, &p_target, learning_rate);
+            total_policy_loss += ml_ai.policy_network.train_step(&input, &p_target, current_lr);
         }
         
-        if epoch % 5 == 0 || epoch == 1 {
-            println!("Epoch {:2}/{}: Value Loss: {:.4}, Policy Loss: {:.4}", 
-                epoch, epochs, total_value_loss / NUM_SAMPLES as f32, total_policy_loss / NUM_SAMPLES as f32);
+        if epoch % 10 == 0 || epoch == 1 {
+            println!("Epoch {:3}/{}: LR: {:.6}, Value Loss: {:.5}, Policy Loss: {:.5}", 
+                epoch, epochs, current_lr, total_value_loss / total_samples as f32, total_policy_loss / total_samples as f32);
         }
     }
 
-    // 4. Save Weights
+    // 4. Save Optimized Weights
+    save_model(&ml_ai, total_samples, epochs);
+    println!("🎉 Phase 2 Training Complete! Total Time: {:?}", start_time.elapsed());
+}
+
+fn process_labels(evals: &Vec<(usize, i32)>) -> (f32, Vec<f32>) {
+    let mut best_score = -100.0;
+    let mut policy_scores = vec![-100.0; 7];
+    
+    for &(col, score) in evals {
+        let norm_score = (score as f32).max(-15.0).min(15.0) / 20.0; // Slightly different normalization
+        if norm_score > best_score {
+            best_score = norm_score;
+        }
+        policy_scores[col] = (score as f32).max(-20.0).min(20.0);
+    }
+    
+    let max_p = policy_scores.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+    let exp_sum: f32 = policy_scores.iter().filter(|&&s| s > -50.0).map(|s| (s - max_p).exp()).sum();
+    let p_label: Vec<f32> = policy_scores.iter().map(|&s| {
+        if s < -50.0 { 0.0 } else { (s - max_p).exp() / exp_sum }
+    }).collect();
+
+    (best_score, p_label)
+}
+
+fn mirror_state(state: &GameState) -> GameState {
+    let mut mirrored = state.clone();
+    for col in 0..COLS {
+        for row in 0..ROWS {
+            mirrored.board[col][row] = state.board[COLS - 1 - col][row];
+        }
+    }
+    mirrored
+}
+
+fn mirror_policy(policy: &[f32]) -> Vec<f32> {
+    let mut mirrored = vec![0.0; 7];
+    for i in 0..7 {
+        mirrored[i] = policy[6 - i];
+    }
+    mirrored
+}
+
+fn save_model(ml_ai: &MLAI, samples: usize, epochs: usize) {
     let mut weights_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     weights_path.push("../../public/ml/data/weights/ml_ai_weights_best.json");
     
-    // Create directory if it doesn't exist
     if let Some(parent) = weights_path.parent() {
         let _ = fs::create_dir_all(parent);
     }
@@ -114,18 +156,17 @@ fn main() {
     let json = serde_json::json!({
         "metadata": {
             "training_date": chrono::Local::now().to_rfc3339(),
-            "samples": NUM_SAMPLES,
+            "phase": 2,
+            "samples": samples,
             "epochs": epochs,
-            "architecture": [256, 128, 64]
+            "architecture": [256, 128, 64],
+            "teacher": "BitboardSolver",
+            "teacher_depth": 18
         },
         "value_network": { "weights": value_weights },
         "policy_network": { "weights": policy_weights }
     });
 
-    match fs::write(&weights_path, serde_json::to_string_pretty(&json).unwrap()) {
-        Ok(_) => println!("💾 Saved optimized weights to: {:?}", weights_path),
-        Err(e) => eprintln!("❌ Failed to save weights: {}", e),
-    }
-
-    println!("🎉 Training Pipeline Finished! Total Time: {:?}", start_time.elapsed());
+    let _ = fs::write(&weights_path, serde_json::to_string_pretty(&json).unwrap());
+    println!("💾 Saved Phase 2 weights to: {:?}", weights_path);
 }

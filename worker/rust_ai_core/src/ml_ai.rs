@@ -102,12 +102,7 @@ impl MLAI {
 
         let value_fn = |s: &GameState| -> f32 {
             let f = GameFeatures::from_game_state(s);
-            let val = value_net.forward(&f.to_array())[0];
-            if s.current_player == crate::Player::Player1 {
-                val
-            } else {
-                -val
-            }
+            value_net.forward(&f.to_array())[0] // Now relative by default
         };
 
         let policy_fn = |s: &GameState| -> Vec<f32> {
