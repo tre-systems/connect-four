@@ -42,9 +42,7 @@ fi
 
 print_status "Building application..."
 
-# Build WASM assets
-print_status "Building WebAssembly assets..."
-npm run build:wasm-assets
+
 
 # Build for Cloudflare
 print_status "Building for Cloudflare..."

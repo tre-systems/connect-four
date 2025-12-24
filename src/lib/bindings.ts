@@ -34,6 +34,23 @@ export interface GeneticParams {
   defensive_weight: number;
 }
 
+// Generated from MLDiagnostics.ts
+
+export interface MLDiagnostics {
+  validMoves: Array<number>;
+  moveEvaluations: Array<MLMoveEvaluation>;
+  valueNetworkOutput: number;
+  policyNetworkOutputs: Array<number>;
+}
+
+// Generated from MLMoveEvaluation.ts
+
+export interface MLMoveEvaluation {
+  column: number;
+  score: number;
+  moveType: string;
+}
+
 // Generated from MoveEvaluationWasm.ts
 
 export interface MoveEvaluationWasm {
@@ -61,23 +78,6 @@ export interface WasmHeuristicResponse {
   move: number | null;
   evaluations: Array<MoveEvaluationWasm>;
   nodesEvaluated: number;
-}
-
-// Generated from MLMoveEvaluation.ts
-
-export interface MLMoveEvaluation {
-  column: number;
-  score: number;
-  moveType: string;
-}
-
-// Generated from MLDiagnostics.ts
-
-export interface MLDiagnostics {
-  validMoves: Array<number>;
-  moveEvaluations: Array<MLMoveEvaluation>;
-  valueNetworkOutput: number;
-  policyNetworkOutputs: Array<number>;
 }
 
 // Generated from WasmMLResponse.ts
