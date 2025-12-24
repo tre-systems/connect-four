@@ -35,7 +35,12 @@ export async function makeAIMove(
         }
         response = {
           move: mlResponse.move,
-          evaluations: [] as any[],
+          evaluations:
+            mlResponse.diagnostics?.moveEvaluations?.map((e: any) => ({
+              column: e.column,
+              score: e.score,
+              moveType: e.moveType,
+            })) || [],
           nodesEvaluated: 0,
           transpositionHits: 0,
         };

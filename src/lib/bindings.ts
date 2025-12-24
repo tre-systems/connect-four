@@ -63,10 +63,28 @@ export interface WasmHeuristicResponse {
   nodesEvaluated: number;
 }
 
+// Generated from MLMoveEvaluation.ts
+
+export interface MLMoveEvaluation {
+  column: number;
+  score: number;
+  moveType: string;
+}
+
+// Generated from MLDiagnostics.ts
+
+export interface MLDiagnostics {
+  validMoves: Array<number>;
+  moveEvaluations: Array<MLMoveEvaluation>;
+  valueNetworkOutput: number;
+  policyNetworkOutputs: Array<number>;
+}
+
 // Generated from WasmMLResponse.ts
 
 export interface WasmMLResponse {
   move: number | null;
   evaluation: number;
   thinking: string;
+  diagnostics: MLDiagnostics;
 }

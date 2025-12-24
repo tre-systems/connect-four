@@ -47,10 +47,10 @@ pub struct WasmHeuristicResponse {
 #[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct WasmMLResponse {
-    pub r#move: Option<u32>,
+    pub r#move: Option<u8>,
     pub evaluation: f32,
     pub thinking: String,
-    // Add other fields as needed, or simplify if full diagnostics arent always needed in TS
+    pub diagnostics: crate::ml_ai::MLDiagnostics,
 }
 
 #[cfg(feature = "wasm")]
@@ -136,9 +136,10 @@ impl ConnectFourAI {
         web_sys::console::log_1(&JsValue::from_str(&format!("🧠 ML AI: {}", ml_response.thinking)));
 
         let response = WasmMLResponse {
-             r#move: ml_response.r#move.map(|m| m as u32),
+             r#move: ml_response.r#move,
              evaluation: ml_response.evaluation,
              thinking: ml_response.thinking,
+             diagnostics: ml_response.diagnostics,
         };
 
         Ok(serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))?)

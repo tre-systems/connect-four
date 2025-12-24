@@ -11,10 +11,11 @@ pub struct MCTSNode {
     pub prior_probability: f32,
     pub is_terminal: bool,
     pub valid_moves: Vec<u8>,
+    pub r#move: Option<u8>, // The move that led to this node
 }
 
 impl MCTSNode {
-    pub fn new(state: GameState, parent: Option<usize>, prior_probability: f32) -> Self {
+    pub fn new(state: GameState, parent: Option<usize>, prior_probability: f32, r#move: Option<u8>) -> Self {
         let valid_moves = state.get_valid_moves();
         let is_terminal = state.is_game_over();
 
@@ -27,6 +28,7 @@ impl MCTSNode {
             prior_probability,
             is_terminal,
             valid_moves,
+            r#move,
         }
     }
 
@@ -57,6 +59,7 @@ pub struct MCTS {
     pub nodes: Vec<MCTSNode>,
     pub exploration_constant: f32,
     pub num_simulations: usize,
+    pub terminal_nodes_found: u32,
 }
 
 impl MCTS {
@@ -65,6 +68,7 @@ impl MCTS {
             nodes: Vec::new(),
             exploration_constant,
             num_simulations,
+            terminal_nodes_found: 0,
         }
     }
 
@@ -76,8 +80,9 @@ impl MCTS {
         temperature: f32,
         add_noise: bool,
     ) -> (u8, Vec<f32>) {
+        self.terminal_nodes_found = 0;
         // Create root node
-        let root_idx = self.add_node(root_state, None, 1.0);
+        let root_idx = self.add_node(root_state, None, 1.0, None);
 
         // Run simulations
         for i in 0..self.num_simulations {
@@ -96,7 +101,7 @@ impl MCTS {
 
         for &child_idx in &root_node.children {
             let child = &self.nodes[child_idx];
-            let move_idx = self.get_move_from_parent(root_idx, child_idx);
+            let move_idx = child.r#move.unwrap_or(0);
             move_probs[move_idx as usize] = child.visits as f32;
             total_visits += child.visits;
         }
@@ -182,6 +187,8 @@ impl MCTS {
         value_fn: &dyn Fn(&GameState) -> f32,
         policy_fn: &dyn Fn(&GameState) -> Vec<f32>,
     ) -> f32 {
+        // Debug print for first few simulations
+        // println!("Simulating Node {}, Depth 0", node_idx);
         self.simulate_with_depth(node_idx, value_fn, policy_fn, 0)
     }
 
@@ -199,55 +206,63 @@ impl MCTS {
             return 0.0;
         }
 
-        {
+        let value = {
             let node = &self.nodes[node_idx];
             if node.is_terminal {
-                return self.get_terminal_value(&node.state);
-            }
-        }
-
-        {
-            let node = &self.nodes[node_idx];
-            if !node.is_fully_expanded() {
+                self.get_terminal_value(&node.state)
+            } else if !node.is_fully_expanded() {
                 // Expand node
                 let new_child_idx = self.expand_node(node_idx, policy_fn);
                 
-                // AlphaZero style: Use the value network prediction directly
-                // Network returns Relative Value (1.0 = Win for current player, -1.0 = Loss)
-                let relative_value = value_fn(&self.nodes[new_child_idx].state);
+                let child = &self.nodes[new_child_idx];
+                
+                // AlphaZero style with Terminal Certainty:
+                // Use the value network prediction directly EXCEPT for terminal states.
+                // This prevents MCTS from missing 1-move wins/losses due to neural network bias.
+                let relative_value = if child.is_terminal {
+                    self.terminal_nodes_found += 1;
+                    self.get_terminal_value(&child.state)
+                } else {
+                    value_fn(&child.state)
+                };
                 
                 // Update the new child node immediately
                 self.nodes[new_child_idx].visits = 1;
                 self.nodes[new_child_idx].total_value = relative_value;
                 
                 // Return NEGATED value to parent (Parent's perspective)
-                return -relative_value;
+                -relative_value
+            } else {
+                // Select child using UCB
+                let parent_visits = self.nodes[node_idx].visits;
+                let children = self.nodes[node_idx].children.clone();
+
+                let best_child_idx = children
+                    .iter()
+                    .max_by(|&&a, &&b| {
+                        // UCB expects score to be "Value for Player at node_idx"
+                        // Our nodes store "total_value" relative to the player at that node.
+                        // So Standard UCB works.
+                        let a_score = self.nodes[a].ucb_score(self.exploration_constant, parent_visits);
+                        let b_score = self.nodes[b].ucb_score(self.exploration_constant, parent_visits);
+                        
+                        a_score
+                            .partial_cmp(&b_score)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    })
+                    .copied()
+                    .unwrap_or(node_idx);
+
+                if best_child_idx == node_idx {
+                     // println!("WARNING: Failed to select best child at node {}", node_idx);
+                }
+
+                // Negamax Recursion
+                // We get value relative to Child's player. We want value relative to Current player.
+                // So we negate it.
+                -self.simulate_with_depth(best_child_idx, value_fn, policy_fn, depth + 1)
             }
-        }
-
-        // Select child using UCB
-        let parent_visits = self.nodes[node_idx].visits;
-        let children = self.nodes[node_idx].children.clone();
-
-        let best_child_idx = children
-            .iter()
-            .max_by(|&&a, &&b| {
-                // UCB expects score to be "Value for Player at node_idx"
-                // Our nodes store "total_value" relative to the player at that node.
-                // So Standard UCB works.
-                let a_score = self.nodes[a].ucb_score(self.exploration_constant, parent_visits);
-                let b_score = self.nodes[b].ucb_score(self.exploration_constant, parent_visits);
-                a_score
-                    .partial_cmp(&b_score)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .copied()
-            .unwrap_or(node_idx);
-
-        // Negamax Recursion
-        // We get value relative to Child's player. We want value relative to Current player.
-        // So we negate it.
-        let value = -self.simulate_with_depth(best_child_idx, value_fn, policy_fn, depth + 1);
+        };
         
         // Update current node
         self.nodes[node_idx].visits += 1;
@@ -271,7 +286,7 @@ impl MCTS {
             let node = &self.nodes[node_idx];
             node.children
                 .iter()
-                .map(|&child_idx| self.get_move_from_parent(node_idx, child_idx))
+                .filter_map(|&child_idx| self.nodes[child_idx].r#move)
                 .collect()
         };
 
@@ -288,7 +303,7 @@ impl MCTS {
         let mut new_state = self.nodes[node_idx].state.clone();
         if new_state.make_move(unexpanded_move).is_ok() {
             let prior_prob = policy.get(unexpanded_move as usize).copied().unwrap_or(0.0);
-            let child_idx = self.add_node(new_state, Some(node_idx), prior_prob);
+            let child_idx = self.add_node(new_state, Some(node_idx), prior_prob, Some(unexpanded_move));
             self.nodes[node_idx].children.push(child_idx);
             child_idx
         } else {
@@ -317,25 +332,13 @@ impl MCTS {
         state: GameState,
         parent: Option<usize>,
         prior_probability: f32,
+        r#move: Option<u8>,
     ) -> usize {
-        let node = MCTSNode::new(state, parent, prior_probability);
+        let node = MCTSNode::new(state, parent, prior_probability, r#move);
         self.nodes.push(node);
         self.nodes.len() - 1
     }
 
-    fn get_move_from_parent(&self, parent_idx: usize, child_idx: usize) -> u8 {
-        let parent_state = &self.nodes[parent_idx].state;
-        let child_state = &self.nodes[child_idx].state;
-
-        // Find the move that was made
-        for col in 0..COLS {
-            let mut test_state = parent_state.clone();
-            if test_state.make_move(col as u8).is_ok() && test_state.board == child_state.board {
-                return col as u8;
-            }
-        }
-        0
-    }
 }
 
 #[cfg(test)]
@@ -345,7 +348,7 @@ mod tests {
     #[test]
     fn test_mcts_node_creation() {
         let state = GameState::new();
-        let node = MCTSNode::new(state, None, 1.0);
+        let node = MCTSNode::new(state, None, 1.0, None);
 
         assert_eq!(node.visits, 0);
         assert_eq!(node.total_value, 0.0);
@@ -357,7 +360,7 @@ mod tests {
     #[test]
     fn test_mcts_ucb_score() {
         let state = GameState::new();
-        let mut node = MCTSNode::new(state, None, 1.0);
+        let mut node = MCTSNode::new(state, None, 1.0, None);
 
         // Test unvisited node
         assert_eq!(node.ucb_score(1.0, 10), f32::INFINITY);

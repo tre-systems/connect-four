@@ -2,15 +2,20 @@ use super::features::GameFeatures;
 use super::neural_network::{NetworkConfig, NeuralNetwork};
 use super::GameState;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
 pub struct MLMoveEvaluation {
     pub column: u8,
     pub score: f32,
     pub move_type: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
 pub struct MLDiagnostics {
     pub valid_moves: Vec<u8>,
     pub move_evaluations: Vec<MLMoveEvaluation>,
@@ -18,7 +23,9 @@ pub struct MLDiagnostics {
     pub policy_network_outputs: Vec<f32>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
 pub struct MLResponse {
     pub r#move: Option<u8>,
     pub evaluation: f32,
@@ -132,8 +139,12 @@ impl MLAI {
             r#move: Some(best_move),
             evaluation: raw_value,
             thinking: format!(
-                "MCTS searched {} sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
-                self.mcts_simulations, best_move, move_probs[best_move as usize], raw_value
+                "MCTS searched {} sims. Best move col {} with visit prob {:.3}. Terminals: {}. Raw Value: {:.3}",
+                self.mcts_simulations, 
+                best_move, 
+                move_probs[best_move as usize], 
+                mcts.terminal_nodes_found,
+                raw_value
             ),
             diagnostics: MLDiagnostics {
                 valid_moves,
