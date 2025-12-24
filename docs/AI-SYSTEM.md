@@ -4,8 +4,8 @@
 
 The Connect Four AI system uses multiple approaches to provide different levels of gameplay:
 
-1. **Bitboard Solver**: Minimax with alpha-beta pruning and bitboard optimizations
-2. **ML-MCTS AI**: AlphaZero-style Monte Carlo Tree Search with neural networks
+1. **Bitboard Solver**: [Negamax](https://en.wikipedia.org/wiki/Negamax) with alpha-beta pruning and [Bitboard](https://en.wikipedia.org/wiki/Bitboard) optimizations
+2. **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style [Monte Carlo Tree Search](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search) with neural networks
 3. **Genetic AI**: Evolved evaluation functions using genetic algorithms
 
 ## ML AI Architecture

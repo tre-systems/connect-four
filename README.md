@@ -8,8 +8,8 @@ A modern, AI-powered implementation of the classic Connect Four game, built with
 
 - **Classic Gameplay**: Traditional Connect Four with modern UI and smooth animations
 - **Advanced AI Opponents**:
-  - **Bitboard Solver**: Strictly optimized Minimax with bitboards (Depth 6)
-  - **ML-MCTS AI**: AlphaZero-style Monte Carlo Tree Search with neural networks
+  - **Bitboard Solver**: Strictly optimized [Minimax](https://en.wikipedia.org/wiki/Minimax) with [Bitboards](https://en.wikipedia.org/wiki/Bitboard) (Depth 6)
+  - **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style [Monte Carlo Tree Search](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search) with neural networks
 - **Genetic Evolution**: AI parameters evolved through genetic algorithms
 - **Offline-First**: Works completely offline once loaded as a PWA
 - **Analytics**: Comprehensive parameter tracking and CSV logging
@@ -62,8 +62,8 @@ If you encounter issues with the WASM AI system:
 
 The game features a sophisticated Dual AI system powered by Rust and WebAssembly:
 
-1.  **Bitboard Solver**: High-performance solver using 64-bit operations.
-2.  **ML-MCTS AI**: AlphaZero-style neural (Value/Policy) + MCTS.
+1.  **Bitboard Solver**: High-performance solver using [64-bit optimizations](https://github.com/denkspuren/BitboardC4/txt/CONECT4.TXT).
+2.  **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style neural (Value/Policy) + MCTS.
 3.  **Self-Play**: Advanced training capability.
 
 > For detailed architecture and performance stats, see [AI System Documentation](docs/AI-SYSTEM.md).
