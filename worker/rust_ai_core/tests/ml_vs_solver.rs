@@ -33,7 +33,7 @@ mod tests {
             
         ml_ai.load_weights(&value_weights, &policy_weights);
         
-        let num_games = 100; // Scaled for Confidence Audit
+        let num_games = 10; // Scaled for Depth 14 Audit
         let mut ml_p1_wins = 0;
         let mut ml_p1_draws = 0;
         let mut ml_p1_losses = 0;
@@ -47,6 +47,7 @@ mod tests {
             
             println!("Game {}/{} (ML is P{})", i + 1, num_games, if ml_is_p1 { 1 } else { 2 });
             
+            let mut moves_count = 0;
             while !state.is_game_over() {
                 let is_ml_turn = (state.current_player == Player::Player1 && ml_is_p1) || 
                                (state.current_player == Player::Player2 && !ml_is_p1);
@@ -56,13 +57,16 @@ mod tests {
                 } else {
                     // Solver move
                     let bitboard = Bitboard::from_game_state(&state);
-                    // Use depth 10 for speed, effectively strong
-                    let (best_move, _) = solver.analyze(&bitboard, 10);
+                    // Use depth 14 for a much more rigorous comparison
+                    let (best_move, _) = solver.analyze(&bitboard, 14);
                     best_move.unwrap() as u8
                 };
                 
                 state.make_move(mv).unwrap();
+                moves_count += 1;
             }
+            
+            println!("Game finished in {} moves.", moves_count);
             
             if let Some(winner) = state.get_winner() {
                 if (winner == Player::Player1 && ml_is_p1) || (winner == Player::Player2 && !ml_is_p1) {

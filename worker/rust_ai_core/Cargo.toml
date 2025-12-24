@@ -14,7 +14,7 @@ wasm-opt = false
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "connect-four-ai-core"
+name = "connect-four-ai-worker"
 path = "src/main.rs"
 
 
