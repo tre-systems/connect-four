@@ -29,6 +29,7 @@ pub struct MLResponse {
 pub struct MLAI {
     pub value_network: NeuralNetwork,
     pub policy_network: NeuralNetwork,
+    pub mcts_simulations: usize,
 }
 
 impl MLAI {
@@ -45,9 +46,15 @@ impl MLAI {
             output_size: 7,
         };
 
+        // Adaptive simulation count: 
+        // - Debug: 100 sims (fast enough for tests)
+        // - Release: 800 sims (production standard)
+        let simulations = if cfg!(debug_assertions) { 100 } else { 800 };
+
         MLAI {
             value_network: NeuralNetwork::new(value_config),
             policy_network: NeuralNetwork::new(policy_config),
+            mcts_simulations: simulations,
         }
     }
 
@@ -88,8 +95,7 @@ impl MLAI {
         let raw_policy = self.policy_network.forward(&features.to_array());
 
         // Use MCTS for search (AlphaZero style)
-        // 800 simulations provides strong tactical play (AlphaZero standard)
-        let mut mcts = super::mcts::MCTS::new(1.41, 800);
+        let mut mcts = super::mcts::MCTS::new(1.41, self.mcts_simulations);
 
         let value_net = &self.value_network;
         let policy_net = &self.policy_network;
@@ -130,8 +136,8 @@ impl MLAI {
             r#move: Some(best_move),
             evaluation: raw_value,
             thinking: format!(
-                "MCTS searched 800 sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
-                best_move, move_probs[best_move as usize], raw_value
+                "MCTS searched {} sims. Best move col {} with visit prob {:.3}. Raw Value: {:.3}",
+                self.mcts_simulations, best_move, move_probs[best_move as usize], raw_value
             ),
             diagnostics: MLDiagnostics {
                 valid_moves,

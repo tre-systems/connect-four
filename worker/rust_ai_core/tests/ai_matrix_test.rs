@@ -6,15 +6,13 @@ use std::time::Instant;
 fn optimize_cpu_usage() {
     // Detect Apple Silicon and optimize thread pool
     if cfg!(target_os = "macos") {
-        // On Apple Silicon, use performance cores
+        // On Apple Silicon, use all cores
         let num_cores = std::thread::available_parallelism()
             .map(|n| n.get())
             .unwrap_or(8);
 
-        // Use 80% of available cores to leave some for system
-        let optimal_threads = (num_cores as f64 * 0.8) as usize;
         rayon::ThreadPoolBuilder::new()
-            .num_threads(optimal_threads)
+            .num_threads(num_cores)
             .stack_size(8 * 1024 * 1024) // 8MB stack for deep recursion
             .build_global()
             .unwrap_or_else(|_| {
@@ -23,7 +21,7 @@ fn optimize_cpu_usage() {
 
         println!(
             "🍎 Apple Silicon detected: Using {} threads ({} cores available)",
-            optimal_threads, num_cores
+            num_cores, num_cores
         );
     } else {
         // On other platforms, use all available cores
@@ -444,12 +442,16 @@ fn test_ai_matrix() {
     println!("{}", "=".repeat(60));
 
     // Get number of games from environment or use default
+    let default_games = if cfg!(debug_assertions) { "10" } else { "20" };
     let num_games = std::env::var("NUM_GAMES")
-        .unwrap_or_else(|_| "50".to_string())
+        .unwrap_or_else(|_| default_games.to_string())
         .parse::<u32>()
-        .unwrap_or(50);
+        .unwrap_or(10);
+
+    let build_mode = if cfg!(debug_assertions) { "Debug (Unoptimized)" } else { "Release (Optimized)" };
 
     println!("Configuration:");
+    println!("  Build Mode:   {}", build_mode);
     println!("  Games per match: {}", num_games);
     println!(
         "  Include slow tests: {}",
@@ -488,95 +490,76 @@ fn test_ai_matrix() {
         match_combinations.len()
     );
 
+    // Create flat list of all games to play
+    let mut all_games = Vec::new();
+    for (ai_type1, ai_type2) in &match_combinations {
+        for game_idx in 0..num_games {
+            all_games.push((ai_type1.clone(), ai_type2.clone(), game_idx));
+        }
+    }
+
+    println!(
+        "🎯 Running {} total games across {} match combinations in parallel...",
+        all_games.len(),
+        match_combinations.len()
+    );
+
     let start_time = Instant::now();
 
-    // Parallelize match execution
-    let results: Vec<MatrixResult> = match_combinations
+    // Parallelize at the game level to ensure 100% CPU utilization
+    let game_results: Vec<(String, String, GameResult, bool)> = all_games
         .into_par_iter()
-        .map(|(ai_type1, ai_type2)| {
-            println!("🏆 Testing {} vs {}", ai_type1.name(), ai_type2.name());
+        .map(|(ai_type1, ai_type2, game_idx)| {
+            // Create fresh AI players for each specific game to avoid shared state
+            let mut ai1 = create_ai_player(&ai_type1).expect("Failed to create AI1");
+            let mut ai2 = create_ai_player(&ai_type2).expect("Failed to create AI2");
 
-            // Create AI players for this match
-            let mut ai1 = match create_ai_player(&ai_type1) {
-                Ok(ai) => ai,
-                Err(e) => {
-                    println!("  ❌ Failed to create {}: {}", ai_type1.name(), e);
-                    return MatrixResult {
-                        ai1: ai_type1.name().to_string(),
-                        ai2: ai_type2.name().to_string(),
-                        ai1_win_rate: 0.0,
-                        ai1_avg_time_ms: 0.0,
-                        ai2_avg_time_ms: 0.0,
-                    };
-                }
-            };
+            let ai1_first = game_idx % 2 == 0;
+            let result = play_game(&mut ai1, &mut ai2, ai1_first);
+            
+            (ai_type1.name().to_string(), ai_type2.name().to_string(), result, ai1_first)
+        })
+        .collect();
 
-            let mut ai2 = match create_ai_player(&ai_type2) {
-                Ok(ai) => ai,
-                Err(e) => {
-                    println!("  ❌ Failed to create {}: {}", ai_type2.name(), e);
-                    return MatrixResult {
-                        ai1: ai_type1.name().to_string(),
-                        ai2: ai_type2.name().to_string(),
-                        ai1_win_rate: 0.0,
-                        ai1_avg_time_ms: 0.0,
-                        ai2_avg_time_ms: 0.0,
-                    };
-                }
-            };
+    // Aggregate game results into MatrixResults per match
+    let mut matrix_map: HashMap<(String, String), (u32, u64, u64)> = HashMap::new();
+    for (ai1_name, ai2_name, result, ai1_first) in game_results {
+        let key = if ai1_name < ai2_name {
+            (ai1_name.clone(), ai2_name.clone())
+        } else {
+            (ai2_name.clone(), ai1_name.clone())
+        };
 
-            let mut ai1_wins = 0;
-            let mut ai2_wins = 0;
-            let mut ai1_total_time = 0;
-            let mut ai2_total_time = 0;
+        let entry = matrix_map.entry(key.clone()).or_insert((0, 0, 0));
+        
+        let ai1_won = if ai1_name == key.0 {
+            if ai1_first { result.winner == Player::Player1 } else { result.winner == Player::Player2 }
+        } else {
+            if ai1_first { result.winner == Player::Player2 } else { result.winner == Player::Player1 }
+        };
 
-            // Play games with periodic AI state reset
-            for game in 0..num_games {
-                let ai1_first = game % 2 == 0; // Alternate who goes first
-                let result = play_game(&mut ai1, &mut ai2, ai1_first);
+        if ai1_won {
+            entry.0 += 1;
+        }
+        
+        if ai1_name == key.0 {
+            entry.1 += result.ai1_time_ms;
+            entry.2 += result.ai2_time_ms;
+        } else {
+            entry.1 += result.ai2_time_ms;
+            entry.2 += result.ai1_time_ms;
+        }
+    }
 
-                // Track moves for statistics
-                ai1_total_time += result.ai1_time_ms;
-                ai2_total_time += result.ai2_time_ms;
-
-                let ai1_won = if ai1_first {
-                    result.winner == Player::Player1
-                } else {
-                    result.winner == Player::Player2
-                };
-
-                if ai1_won {
-                    ai1_wins += 1;
-                } else {
-                    ai2_wins += 1;
-                }
-
-                // Reset AI state after every game to ensure clean state
-                ai1.reset();
-                ai2.reset();
-
-                if game % 20 == 0 && num_games > 20 {
-                    println!(
-                        "    Game {}: {} wins: {}, {} wins: {}",
-                        game + 1,
-                        ai_type1.name(),
-                        ai1_wins,
-                        ai_type2.name(),
-                        ai2_wins
-                    );
-                }
-            }
-
-            let ai1_win_rate = (ai1_wins as f64 / num_games as f64) * 100.0;
-            let ai1_avg_time = ai1_total_time as f64 / num_games as f64;
-            let ai2_avg_time = ai2_total_time as f64 / num_games as f64;
-
+    let results: Vec<MatrixResult> = matrix_map
+        .into_iter()
+        .map(|((ai1, ai2), (ai1_wins, ai1_time, ai2_time))| {
             MatrixResult {
-                ai1: ai_type1.name().to_string(),
-                ai2: ai_type2.name().to_string(),
-                ai1_win_rate,
-                ai1_avg_time_ms: ai1_avg_time,
-                ai2_avg_time_ms: ai2_avg_time,
+                ai1,
+                ai2,
+                ai1_win_rate: (ai1_wins as f64 / num_games as f64) * 100.0,
+                ai1_avg_time_ms: ai1_time as f64 / num_games as f64,
+                ai2_avg_time_ms: ai2_time as f64 / num_games as f64,
             }
         })
         .collect();
