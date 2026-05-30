@@ -18,3 +18,7 @@ export const DEFAULT_GENETIC_PARAMS = {
   defensive_weight: 1.372,
   horizontal_connection_weight: 1.344,
 };
+
+// Search depth for the Classic AI (bitboard solver) in human-vs-AI play. Shared
+// by the AI engine (ai-logic) and the selection-card label so they can't drift.
+export const CLASSIC_AI_DEPTH = 5;

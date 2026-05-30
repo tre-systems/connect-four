@@ -1,5 +1,6 @@
 import { GameState, Player, AIType } from '../schemas';
 import { MLMoveEvaluation, MoveEvaluationWasm } from '../bindings';
+import { CLASSIC_AI_DEPTH } from '../constants';
 import { getWASMAIService } from '../wasm-ai-service';
 import { getValidMoves, printBoard } from './board-logic';
 
@@ -56,7 +57,7 @@ export async function makeAIMove(
     let response;
     switch (aiType) {
       case 'classic':
-        response = await wasmAI.getBestMove(gameState, 5);
+        response = await wasmAI.getBestMove(gameState, CLASSIC_AI_DEPTH);
         break;
       case 'ml': {
         const mlResponse = await wasmAI.getMLMove(gameState);

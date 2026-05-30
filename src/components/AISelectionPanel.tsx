@@ -4,13 +4,14 @@ import { motion } from 'framer-motion';
 import { useGameStore } from '../lib/game-store';
 import AISelectionCard from './AISelectionCard';
 import type { AIType } from '../lib/types';
+import { CLASSIC_AI_DEPTH } from '../lib/constants';
 
 const AI_OPTIONS = [
   {
     aiType: 'classic' as AIType,
     title: 'Classic AI',
     description: 'A strategic opponent using minimax algorithm with alpha-beta pruning.',
-    subtitle: 'Minimax + Alpha-Beta (Depth 14)',
+    subtitle: `Minimax + Alpha-Beta (Depth ${CLASSIC_AI_DEPTH})`,
     colorClass: 'text-blue-400',
     borderColorClass: 'border-blue-500/50',
     icon: '⚙️',
