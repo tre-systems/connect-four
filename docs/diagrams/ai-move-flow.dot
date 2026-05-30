@@ -50,7 +50,7 @@ digraph AiMoveFlow {
 
   D1 [label=<<B>aiType?</B>>, shape=diamond, style=filled, width=2.7, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];
 
-  C1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">getBestMove(depth 6)</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+  C1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">getBestMove(depth 5)</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
   C2 [label=<<B>ML-MCTS</B><BR/><FONT POINT-SIZE="15">getMLMove()</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
 
   D2 [label=<<B>valid move 0&ndash;6?</B>>, shape=diamond, style=filled, width=3.0, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];

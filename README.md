@@ -1,162 +1,63 @@
 # Connect Four
 
-A modern, AI-powered implementation of the classic Connect Four game, built with Next.js, Rust/WASM, and advanced genetic algorithms.
+A Connect Four game with a Rust/WebAssembly AI that runs entirely in the browser — Next.js 15 on Cloudflare Workers.
 
-![Connect Four Screenshot](screenshot.png)
+**Play it: [connect-4.tre.systems](https://connect-4.tre.systems/)**
+
+![Connect Four screenshot](screenshot.png)
 
 ## Features
 
-- **Classic Gameplay**: Traditional Connect Four with modern UI and smooth animations
-- **Advanced AI Opponents**:
-  - **Bitboard Solver**: Strictly optimized [Minimax](https://en.wikipedia.org/wiki/Minimax) with [Bitboards](https://en.wikipedia.org/wiki/Bitboard) (Depth 6)
-  - **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style [Monte Carlo Tree Search](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search) with neural networks
-- **Genetic Evolution**: AI parameters evolved through genetic algorithms
-- **Offline-First**: Works completely offline once loaded as a PWA
-- **Analytics**: Comprehensive parameter tracking and CSV logging
-- **Game Modes**: Human vs AI, and AI vs AI (Watch Mode)
-- **Responsive**: Fully optimized for mobile and desktop
+- **Two AI opponents**, both compiled from Rust to WebAssembly and run client-side:
+  - **Bitboard solver** — negamax + alpha-beta over a 64-bit [bitboard](https://github.com/denkspuren/BitboardC4), with genetically-evolved evaluation weights.
+  - **ML-MCTS** — [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style [Monte Carlo Tree Search](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search) over a 4×128 value/policy network.
+- **Human vs AI** and **AI vs AI** ("Watch Mode").
+- **Offline-first PWA** — fully playable once loaded; moves never hit a server.
+- Responsive UI (React 19, Tailwind, Framer Motion).
 
-## Quick Start
+## Quick start
 
 ```bash
-# Install dependencies
 npm install
-
-# Setup database and build WASM
-npm run db:setup
-npm run build:wasm-assets
-
-# Start development server
-npm run dev
+npm run build:wasm-assets   # compile the Rust AI to WASM + copy model assets
+npm run db:setup            # create the local SQLite database
+npm run dev                 # http://localhost:3000
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to play!
+Requires Node 20+, Rust + Cargo, and [`wasm-pack`](https://github.com/rustwasm/wasm-pack) (`cargo install wasm-pack`).
 
-## Troubleshooting
+## Commands
 
-### WASM AI Issues
-
-If you encounter issues with the WASM AI system:
-
-1. **Rebuild WASM Assets**:
-
-   ```bash
-   npm run build:wasm-assets
-   ```
-
-2. **Test WASM Loading**:
-
-   ```bash
-   node scripts/test-wasm-loading.js
-   ```
-
-3. **Check Console Logs**: Look for WASM loading messages in browser console
-
-4. **Verify Assets**: Ensure all files are accessible:
-   - `/wasm/connect_four_ai_core.js`
-   - `/wasm/connect_four_ai_core_bg.wasm`
-   - `/ml/data/weights/ml_ai_weights_best.json`
-   - `/ml/data/genetic_params/evolved.json`
-
-## AI System
-
-The game features a sophisticated Dual AI system powered by Rust and WebAssembly:
-
-1.  **Bitboard Solver**: High-performance solver using [bitboard optimizations](https://github.com/denkspuren/BitboardC4) (Negamax + alpha-beta).
-2.  **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style neural (Value/Policy) + MCTS.
-3.  **Supervised Training**: Models trained using bitboard solver as teacher.
-
-> For detailed architecture and performance stats, see [AI System Documentation](docs/AI-SYSTEM.md).
-
-### Recent Updates
-
-- **WASM Integration**: Pure client-side execution for zero latency.
-- **Model Optimization**: ML models converted to efficient flat arrays.
-
-### Genetic Evolution
-
-The AI parameters are evolved using genetic algorithms. Results are included in the release.
-
-## Project Status
-
-- **CI**: Every push to `main` runs the full gate (`npm run check`: lint, type-check, Rust AI matrix tests, unit coverage, and Playwright e2e) before deploying — see [deploy.yml](.github/workflows/deploy.yml).
-- **AI Matrix**: All AI types are exercised by `cargo test`, with the **Bitboard Solver (Depth 6)** and **ML-MCTS (AlphaZero)** as the strongest opponents.
-- **Game Modes**: Human vs AI and AI vs AI ("Watch Mode"), including Classic vs ML battles.
-- **Persistence**: Current game state is saved to `localStorage`. A D1/Drizzle database layer is scaffolded but not yet wired in — see [docs/BACKLOG.md](docs/BACKLOG.md).
-
-## Development
-
-### Testing
-
-```bash
-# Run all tests
-npm run test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run E2E tests
-npm run test:e2e
-
-# Run AI comparison tests
-npm run test:ai-comparison:fast
-```
-
-### Building
-
-```bash
-# Build for development
-npm run build
-
-# Build for production
-npm run build:cf
-
-# Build WASM assets
-npm run build:wasm-assets
-```
-
-### Database
-
-```bash
-# Setup local database
-npm run db:setup
-
-# Run migrations
-npm run db:migrate
-
-# Database shell
-npm run db:shell
-```
-
-## Deployment
-
-The application is deployed to Cloudflare Workers with automatic deployments from the main branch.
-
-```bash
-# Deploy manually
-npm run deploy
-
-# Quick deploy
-npm run deploy:quick
-```
+| Command                                   | Description                                               |
+| ----------------------------------------- | --------------------------------------------------------- |
+| `npm run dev`                             | Dev server (Turbopack)                                    |
+| `npm run build:cf`                        | Production build (OpenNext → Cloudflare)                  |
+| `npm run check`                           | Full gate: lint, type-check, Rust AI tests, coverage, e2e |
+| `npm run test` / `test:e2e` / `test:rust` | Vitest unit / Playwright e2e / cargo tests                |
+| `npm run test:ai-comparison:fast`         | AI strength matrix (Rust)                                 |
+| `npm run deploy`                          | Build, apply D1 migrations, and deploy via Wrangler       |
+| `npm run logs`                            | Tail the production Worker logs                           |
 
 ## Architecture
 
-- **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS
-- **AI Engine**: Rust compiled to WebAssembly for client-side execution
-- **Persistence**: `localStorage` for game state; a Cloudflare D1 + Drizzle layer is scaffolded for future server-side history (not yet wired in)
-- **Deployment**: Cloudflare Workers (via OpenNext) with GitHub Actions CI/CD
+- **Frontend** — Next.js 15 / React 19; state in Zustand + Immer.
+- **AI engine** — Rust compiled to WebAssembly (`worker/`), instantiated and run on the main thread in the browser.
+- **Persistence** — current game state in `localStorage`. A Cloudflare D1 + Drizzle layer is scaffolded but **not yet wired in** (see [BACKLOG](docs/BACKLOG.md)).
+- **Hosting** — a single Cloudflare Worker (Next.js via [OpenNext](https://opennext.js.org/cloudflare)) serving the SPA plus the WASM and model assets.
 
-See [docs/](docs/) for the full architecture, AI system, development, and deployment guides.
+See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the system design, patterns, and diagrams, and **[docs/AI-SYSTEM.md](docs/AI-SYSTEM.md)** for the AI engine.
 
-## Contributing
+## Deployment
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `npm run check`
-5. Submit a pull request
+Pushing to `main` runs the full `npm run check` gate in [CI](.github/workflows/deploy.yml) and, if green, deploys to Cloudflare. CI does **not** apply D1 migrations — run `npm run deploy` (or `npm run db:migrate`) yourself when the schema changes.
+
+## Documentation
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, patterns, diagrams
+- [docs/AI-SYSTEM.md](docs/AI-SYSTEM.md) — solver, neural network, training
+- [docs/BACKLOG.md](docs/BACKLOG.md) — known gaps and planned work
+- [AGENTS.md](AGENTS.md) — coding conventions for this repo
 
 ## License
 
-MIT License - see LICENSE file for details.
+[MIT](LICENSE)

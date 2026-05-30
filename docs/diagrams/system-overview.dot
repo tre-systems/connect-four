@@ -146,7 +146,7 @@ digraph SystemOverview {
       margin=22
     ];
 
-    G1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">Negamax + &alpha;-&beta; &middot; depth 6</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    G1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">Negamax + &alpha;-&beta; pruning</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
     G2 [label=<<B>ML-MCTS</B><BR/><FONT POINT-SIZE="15">AlphaZero-style &middot; 4000 sims</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
     G3 [label=<<B>Neural network</B><BR/><FONT POINT-SIZE="15">4&times;128 value + policy</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
 
