@@ -18,7 +18,7 @@ This script handles the entire pipeline:
 2. Generates Service Worker
 3. Builds the Next.js application (OpenNext)
 4. Applies pending D1 database migrations
-5. Deploys to Cloudflare Pages/Workers
+5. Deploys to Cloudflare Workers
 
 ### Alternative: Quick Deploy
 
@@ -51,7 +51,7 @@ wrangler deploy
 
 1. **Node.js 20+** and npm
 2. **Rust** and Cargo
-3. **wasm-pack**: `cargo install wasm-pack --version 0.12.1 --locked`
+3. **wasm-pack**: `cargo install wasm-pack --version 0.13.1 --locked` (matches the version pinned in CI)
 4. **Wrangler CLI**: `npm install -g wrangler`
 
 ### Cloudflare Account Setup
@@ -194,34 +194,17 @@ wrangler config
 
 ### GitHub Actions
 
-Your project includes a GitHub Actions workflow for automatic deployment:
+Deployment is automated by [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml). It triggers on **push to `main`** (and manual `workflow_dispatch`) and runs:
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to Cloudflare
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+1. Checkout, set up Node 20 + Rust (`dtolnay/rust-toolchain@stable`) + `wasm-pack` v0.13.1
+2. `npm ci --legacy-peer-deps`
+3. Install Playwright browsers
+4. `npm run build:wasm-assets`
+5. `npm run check` — the full gate: lint, type-check, Rust AI matrix test, unit coverage, and Playwright e2e
+6. `npm run build:cf` (OpenNext build)
+7. `wrangler deploy`
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - uses: actions/setup-rust@v1
-      - run: cargo install wasm-pack --version 0.12.1 --locked
-      - run: npm ci
-      - run: npm run build:cf
-      - run: wrangler d1 migrations apply connect-four-db --remote
-      - run: wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-```
+> **Note:** the workflow does **not** apply D1 migrations — that step is intentionally a no-op echo. Migrations are applied out-of-band by the `npm run deploy` script (`scripts/deploy.sh`, which runs `wrangler d1 migrations apply … --remote`) or manually via `npm run db:migrate`. If you add a schema change, apply the migration yourself; pushing to `main` will not run it.
 
 ### Environment Secrets
 
@@ -405,10 +388,10 @@ wrangler rollback
 npm run deploy:quick
 ```
 
-### Check Health
+### Check the live site
 
 ```bash
-curl https://connect-4.tre.systems/health
+curl -I https://connect-4.tre.systems/
 ```
 
 ## 📚 Additional Resources
@@ -429,5 +412,5 @@ If you encounter issues:
 
 ---
 
-**Last Updated**: July 2025  
+**Last Updated**: May 2026  
 **Status**: Production Ready ✅

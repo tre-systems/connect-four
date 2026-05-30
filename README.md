@@ -62,7 +62,7 @@ If you encounter issues with the WASM AI system:
 
 The game features a sophisticated Dual AI system powered by Rust and WebAssembly:
 
-1.  **Bitboard Solver**: High-performance solver using [64-bit optimizations](https://github.com/denkspuren/BitboardC4/txt/CONECT4.TXT).
+1.  **Bitboard Solver**: High-performance solver using [bitboard optimizations](https://github.com/denkspuren/BitboardC4) (Negamax + alpha-beta).
 2.  **ML-MCTS AI**: [AlphaZero](https://en.wikipedia.org/wiki/AlphaZero)-style neural (Value/Policy) + MCTS.
 3.  **Supervised Training**: Models trained using bitboard solver as teacher.
 
@@ -79,11 +79,10 @@ The AI parameters are evolved using genetic algorithms. Results are included in 
 
 ## Project Status
 
-- **All lint, type checks, and tests pass** as of the latest commit.
-- **AI Matrix**: All AI types tested, with **Bitboard-Solver (Depth 6)** and **ML-MCTS (AlphaZero)** showing strong performance.
-- **Coverage**: 70% statements, 82% branches, 77% functions. All core logic and AI modules are well covered.
-- **E2E**: All Playwright end-to-end tests pass.
-- **AI vs AI Mode**: Now supports Classic AI vs ML AI battles with clear visual indicators.
+- **CI**: Every push to `main` runs the full gate (`npm run check`: lint, type-check, Rust AI matrix tests, unit coverage, and Playwright e2e) before deploying — see [deploy.yml](.github/workflows/deploy.yml).
+- **AI Matrix**: All AI types are exercised by `cargo test`, with the **Bitboard Solver (Depth 6)** and **ML-MCTS (AlphaZero)** as the strongest opponents.
+- **Game Modes**: Human vs AI and AI vs AI ("Watch Mode"), including Classic vs ML battles.
+- **Persistence**: Current game state is saved to `localStorage`. A D1/Drizzle database layer is scaffolded but not yet wired in — see [docs/BACKLOG.md](docs/BACKLOG.md).
 
 ## Development
 
@@ -143,10 +142,12 @@ npm run deploy:quick
 
 ## Architecture
 
-- **Frontend**: Next.js 15 with React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS
 - **AI Engine**: Rust compiled to WebAssembly for client-side execution
-- **Database**: Cloudflare D1 (production), SQLite (development)
-- **Deployment**: Cloudflare Workers with GitHub Actions CI/CD
+- **Persistence**: `localStorage` for game state; a Cloudflare D1 + Drizzle layer is scaffolded for future server-side history (not yet wired in)
+- **Deployment**: Cloudflare Workers (via OpenNext) with GitHub Actions CI/CD
+
+See [docs/](docs/) for the full architecture, AI system, development, and deployment guides.
 
 ## Contributing
 

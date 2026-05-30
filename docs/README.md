@@ -21,10 +21,10 @@ Welcome to the Connect Four project documentation. This guide provides comprehen
 
 ### Reference Documentation
 
-| Document                                 | Purpose                                  | Audience         |
-| ---------------------------------------- | ---------------------------------------- | ---------------- |
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | System design, data flow, infrastructure | Architects       |
-| **[TODO.md](./TODO.md)**                 | Current tasks and future plans           | Project managers |
+| Document                                 | Purpose                                  | Audience    |
+| ---------------------------------------- | ---------------------------------------- | ----------- |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | System design, data flow, infrastructure | Architects  |
+| **[BACKLOG.md](./BACKLOG.md)**           | Known gaps, tech debt, future work       | Maintainers |
 
 ## 🚀 Quick Reference
 
@@ -60,7 +60,7 @@ npm run db:shell              # Database shell
 - **Dual AI System**: Classic minimax AI + ML neural network AI
 - **Offline Support**: PWA with full offline gameplay
 - **Cloudflare Deployment**: Production deployment with D1 database
-- **Comprehensive Testing**: 89+ tests passing, E2E coverage
+- **Comprehensive Testing**: Vitest unit + Playwright e2e + Rust integration tests (run via `npm run check`)
 
 ### 🔄 Active Development
 
@@ -70,23 +70,23 @@ npm run db:shell              # Database shell
 
 ### 📋 Next Steps
 
-See **[TODO.md](./TODO.md)** for detailed roadmap and current tasks.
+See **[BACKLOG.md](./BACKLOG.md)** for known gaps, tech debt, and planned work.
 
 ## 🏗️ Architecture Overview
 
 The project uses a modern web architecture:
 
-- **Frontend**: Next.js 15 with React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS
 - **AI Engine**: Rust compiled to WebAssembly for client-side execution
-- **Database**: Cloudflare D1 (production), SQLite (development)
-- **Deployment**: Cloudflare Workers with GitHub Actions CI/CD
+- **Persistence**: `localStorage` for game state; D1 + Drizzle scaffolded but not yet wired in
+- **Deployment**: Cloudflare Workers (via OpenNext) with GitHub Actions CI/CD
 
 ### Key Components
 
 - **Game Logic**: Pure functions in `src/lib/game-logic.ts`
 - **AI Services**: WASM integration in `src/lib/wasm-ai-service.ts`
 - **State Management**: Zustand with Immer in `src/lib/game-store.ts`
-- **Database**: Drizzle ORM with migrations
+- **Persistence**: `localStorage` (game state); Drizzle + D1 layer scaffolded, not yet wired in
 
 ## 🤖 AI System
 
@@ -106,7 +106,7 @@ The game features a sophisticated dual AI system:
 
 ### Performance Results
 
-Latest AI matrix test results show:
+AI matrix test results (Dec 2024 snapshot — regenerate with `npm run test:ai-comparison`):
 
 - **MM-Depth6**: 82.6% average win rate (strongest)
 - **MM-Depth3**: 45.7% average win rate (balanced)
@@ -164,13 +164,7 @@ npm run test:coverage     # Coverage report
 
 ## 📈 Analytics
 
-The game includes comprehensive analytics:
-
-- **Game Statistics**: Win rates, move counts, duration
-- **AI Performance**: Response times, evaluation metrics
-- **User Behavior**: Game completion rates, AI selection
-
-All data is privacy-focused with anonymous player IDs.
+A database schema for per-game analytics (outcome, move count, duration, AI type) is defined with Drizzle + D1, keyed by anonymous `nanoid()` player IDs. **Note:** this layer is scaffolded but not yet wired into the running app — see [ARCHITECTURE.md](./ARCHITECTURE.md#database-system) and [BACKLOG.md](./BACKLOG.md).
 
 ## 🤝 Contributing
 
@@ -187,6 +181,6 @@ MIT License - see [LICENSE](../LICENSE) for details.
 
 ---
 
-**Last Updated**: July 2025  
+**Last Updated**: May 2026  
 **Version**: 1.0.0  
 **Status**: Production Ready ✅

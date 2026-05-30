@@ -25,11 +25,11 @@ This implementation stands out for several reasons:
 ### Frontend (`src/`)
 
 - **UI Components**: `src/components/` (React 19, Tailwind, Framer Motion)
-- **State Management**: `src/lib/game-store.ts` (Zustand + Immer)
-- **Game Logic**: `src/lib/game-logic.ts` (pure functions)
-- **AI Services**: `src/lib/wasm-ai-service.ts` (Handles both Classic and ML AI)
-- **Database**: `src/lib/actions.ts` (save games)
-- **Statistics**: `src/lib/stats-store.ts`
+- **Game State**: `src/lib/game-store.ts` (Zustand + Immer, persisted to `localStorage`)
+- **UI State**: `src/lib/ui-store.ts` (Zustand)
+- **Game Logic**: `src/lib/game-logic.ts` and `src/lib/logic/` (pure functions)
+- **AI Services**: `src/lib/wasm-ai-service.ts` (loads the WASM module; handles Classic and ML AI)
+- **Persistence layer**: `src/lib/db/` (Drizzle schema + D1/SQLite connector — see "Database System" below)
 
 ### AI Engine
 
@@ -65,15 +65,18 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 4. Chosen move processed by `makeMoveLogic`
 5. UI updates
 
-### Game Completion & Database
+### Game Completion
 
 1. Game state set to finished
-2. Local stats updated
-3. `postGameToServer` action runs
-4. Game saved to DB
-5. Completion overlay shows stats
+2. Winning line highlighted and the win animation plays
+3. Completion overlay shows the result
+4. Current game state is persisted to `localStorage` (so a game in progress survives a refresh)
+
+> **Note:** The app is currently pure client-side. There is no server round-trip on game completion — games are **not** written to a database in the running app today. See "Database System" below.
 
 ## Database System
+
+> **Status:** The Drizzle schema, the D1 binding (`wrangler.toml`), the local SQLite connector (`src/lib/db/index.ts`), and the migration in `migrations/` all exist and are migration-ready — but **no application code currently calls the database.** `getDb()` is only exercised by tests; `src/app/` has no API routes or server actions. This is scaffolding for server-side game history/analytics that has not been wired into the client-only app. Treat the section below as the intended design, not current runtime behaviour. See [BACKLOG.md](./BACKLOG.md).
 
 ### Local Development
 
@@ -108,29 +111,20 @@ export const games = sqliteTable('games', {
 });
 ```
 
-### Game Statistics
+### Game Statistics (intended design)
 
-The game includes comprehensive statistics tracking:
+The schema is designed to capture per-game records for later analytics:
 
-**Features**:
+- **Outcome + metadata**: winner, move count, duration, and game type (`classic` / `ml` / `watch` / `heuristic`)
+- **Privacy-focused**: `playerId` generated with `nanoid()` for anonymous tracking — no PII
 
-- **Win/Loss Tracking**: Automatic recording of game outcomes
-- **Win Rate Calculation**: Percentage of games won
-- **Local Storage**: Statistics persist across browser sessions
-- **Database Integration**: Games saved to database for analytics
-- **Real-time Updates**: Statistics update immediately after game completion
-
-**Implementation**:
-
-- Statistics managed using Zustand with persistent storage
-- Games automatically saved to database upon completion
-- Privacy-focused: Player ID generated using `nanoid()` for anonymous tracking
+Today, the only thing that persists between sessions is the **current game state** (via the Zustand `persist` middleware → `localStorage`, key `connect-4-game-storage`). Aggregate win-rate/analytics and database writes are not yet implemented.
 
 ## Deployment
 
 ### Frontend Deployment
 
-- **Platform**: Next.js 15 on Cloudflare Pages
+- **Platform**: Next.js 15 deployed to Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`)
 - **Build**: `npm run build:cf`
 - **Domain**: `https://connect-4.tre.systems`
 
@@ -147,20 +141,7 @@ Set in `public/_headers`:
 
 ### Performance Considerations
 
-**Server-Side AI Advantages**:
-
-- Consistent performance across devices
-- Reduced client load
-- Centralized control
-
-**Server-Side AI Disadvantages**:
-
-- Network latency
-- Infrastructure costs
-- Offline limitations
-- Scalability concerns
-
-**Current Decision**: Client-side AI exclusively for performance, offline capability, and cost efficiency.
+AI runs **exclusively client-side** (WASM). This was a deliberate move away from the original hybrid client/server design: it removes network latency, eliminates server/infra cost, and enables true offline play. The trade-off — performance now depends on the user's device — is acceptable because the bitboard solver is fast even on mobile.
 
 ## Development vs Production
 
@@ -182,7 +163,6 @@ Set in `public/_headers`:
 - Modern, maintainable, high-performance architecture
 - All AI runs locally in the browser (WASM)
 - Clear separation of concerns
-- Full offline and online support
-- Comprehensive statistics tracking
-- Privacy-focused data collection
-- Preserved server infrastructure for future use cases
+- Full offline support (PWA)
+- Privacy-focused, anonymous player IDs
+- Database layer scaffolded (D1 + Drizzle) but not yet wired into the app
