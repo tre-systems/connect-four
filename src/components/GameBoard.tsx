@@ -93,7 +93,6 @@ export default function GameBoard({
           </div>
           <div className="grid grid-cols-7 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur relative">
             {gameState.board.map((column, colIndex) => {
-              // Check if column has space (any cell is null)
               const hasSpace = column.some(cell => cell === null);
               const isClickable =
                 gameState.gameStatus === 'playing' &&
@@ -117,13 +116,12 @@ export default function GameBoard({
                       column={colIndex}
                       row={rowIndex}
                       player={cell}
-                      isClickable={false} // Individual squares are not clickable
+                      isClickable={false}
                       onColumnClick={handleColumnClick}
                       isWinning={winningSet.has(`${colIndex},${rowIndex}`)}
                     />
                   ))}
 
-                  {/* Column click indicator */}
                   {isClickable && isMounted && (
                     <motion.div
                       className="absolute inset-0 rounded-lg border-2 border-green-400/50 pointer-events-none"
@@ -140,7 +138,6 @@ export default function GameBoard({
               );
             })}
 
-            {/* Dropping piece animation - positioned relative to the entire board */}
             {droppingPieces.map(drop => (
               <motion.div
                 key={drop.id}
@@ -173,7 +170,6 @@ export default function GameBoard({
               </motion.div>
             ))}
 
-            {/* Connect Four Win Animation */}
             <AnimatePresence>
               {showWinAnimation && gameState.winningLine && gameState.winner && (
                 <ConnectFourWin onComplete={handleWinAnimationComplete} />

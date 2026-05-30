@@ -7,7 +7,7 @@ fn main() {
     println!("========================");
 
     let mut ml_ai = MLAI::new();
-    
+
     // Load weights
     let weights_path = "../../public/ml/data/weights/ml_ai_weights_best.json";
     if let Ok(weights_data) = fs::read_to_string(weights_path) {
@@ -56,17 +56,17 @@ fn main() {
 fn inspect_state(ai: &mut MLAI, state: &GameState, label: &str) {
     println!("\n--- {label} ---");
     print_board(state);
-    
+
     let features = GameFeatures::from_game_state(state);
     let value = ai.value_network.forward(&features.to_array())[0];
     let policy = ai.policy_network.forward(&features.to_array());
-    
+
     println!("Value Network Output: {:.4} (Relative to {:?})", value, state.current_player);
     println!("Policy Probabilities:");
     for i in 0..7 {
         println!("  Col {}: {:.4}", i, policy[i]);
     }
-    
+
     let response = ai.get_best_move(state);
     println!("MCTS Decision: Col {} (Eval: {:.4})", response.r#move.unwrap_or(99), response.evaluation);
     println!("Thinking: {}", response.thinking);

@@ -62,12 +62,7 @@ class WASMAIService {
   }
 
   private async convertGameStateToWASM(gameState: GameState): Promise<unknown> {
-    const board = gameState.board.map(col =>
-      col.map(cell => {
-        if (cell === null) return 'empty';
-        return cell;
-      }),
-    );
+    const board = gameState.board.map(col => col.map(cell => cell ?? 'empty'));
 
     const geneticParams = await this.loadGeneticParams();
 
@@ -97,9 +92,7 @@ class WASMAIService {
 
     try {
       const wasmState = await this.convertGameStateToWASM(gameState);
-      const result = this.ai.get_best_move(wasmState, depth);
-
-      return result;
+      return this.ai.get_best_move(wasmState, depth);
     } catch (error) {
       console.error('WASM AI error:', error);
       throw new Error(`WASM AI failed: ${error}`);
@@ -126,8 +119,7 @@ class WASMAIService {
 
     try {
       const wasmState = await this.convertGameStateToWASM(gameState);
-      const result = this.ai.get_ml_move(wasmState);
-      return result;
+      return this.ai.get_ml_move(wasmState);
     } catch (error) {
       console.error('🔍 ML AI: Error details:', error);
       throw new Error(`WASM ML AI failed: ${error}`);

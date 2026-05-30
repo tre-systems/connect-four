@@ -14,11 +14,9 @@ def flatten_layer_weights(layer_data):
     """Flatten layer weights into a single array."""
     weights = []
 
-    # Add weight matrices
     for key, value in layer_data.items():
         if key.endswith(".weight"):
             if isinstance(value, list):
-                # Flatten 2D weight matrix
                 for row in value:
                     weights.extend(row)
             else:
@@ -39,7 +37,6 @@ def convert_model_format(input_path, output_path):
     with open(input_path, "r") as f:
         model = json.load(f)
 
-    # Extract value and policy network weights
     value_weights = []
     policy_weights = []
 
@@ -51,7 +48,6 @@ def convert_model_format(input_path, output_path):
         policy_weights = flatten_layer_weights(model["policy_network"])
         print(f"Policy network weights: {len(policy_weights)} values")
 
-    # Create simple format
     simple_model = {
         "value_network": {"weights": value_weights},
         "policy_network": {"weights": policy_weights},
@@ -80,7 +76,7 @@ def main():
 
     try:
         value_count, policy_count = convert_model_format(input_path, output_path)
-        print(f"✅ Conversion complete!")
+        print("✅ Conversion complete!")
         print(f"   Value weights: {value_count}")
         print(f"   Policy weights: {policy_count}")
     except Exception as e:

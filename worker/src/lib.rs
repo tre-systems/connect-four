@@ -1,6 +1,6 @@
 use crate::genetic_params::GeneticParams;
 use serde::{Deserialize, Serialize};
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::Hash;
 
 pub mod wasm_api;
 
@@ -264,7 +264,6 @@ impl GameState {
             return 0;
         }
 
-        // Use genetic parameters if available, otherwise use hardcoded values
         self.evaluate_with_genetic_params()
     }
 
@@ -282,7 +281,6 @@ impl GameState {
 
         let mut score = 0;
 
-        // Position evaluation using genetic parameters
         for col in 0..COLS {
             let column_value = match col {
                 3 => self.genetic_params.center_column_value, // Center column
@@ -311,79 +309,49 @@ impl GameState {
             }
         }
 
-        // Center control bonus using genetic parameters
         let center_control_p1 = self.center_control_score(Player::Player1);
         let center_control_p2 = self.center_control_score(Player::Player2);
         let center_weight = self.genetic_params.center_control_weight as i32;
         score += center_control_p1 * center_weight;
         score -= center_control_p2 * center_weight;
 
-        // Threat detection using genetic parameters
         let threat_p1 = self.threat_score(Player::Player1);
         let threat_p2 = self.threat_score(Player::Player2);
         let threat_weight = self.genetic_params.threat_weight as i32;
         score += threat_p1 * threat_weight;
         score -= threat_p2 * threat_weight;
 
-        // Piece count evaluation using genetic parameters
         let piece_count_p1 = self.pieces_count(Player::Player1);
         let piece_count_p2 = self.pieces_count(Player::Player2);
         let piece_weight = self.genetic_params.piece_count_weight as i32;
         score += piece_count_p1 * piece_weight;
         score -= piece_count_p2 * piece_weight;
 
-        // Mobility evaluation using genetic parameters
         let mobility_p1 = self.mobility_score(Player::Player1);
         let mobility_p2 = self.mobility_score(Player::Player2);
         let mobility_weight = self.genetic_params.mobility_weight as i32;
         score += mobility_p1 * mobility_weight;
         score -= mobility_p2 * mobility_weight;
 
-        // Vertical control evaluation using genetic parameters
         let vertical_p1 = self.vertical_control_score(Player::Player1);
         let vertical_p2 = self.vertical_control_score(Player::Player2);
         let vertical_weight = self.genetic_params.vertical_control_weight as i32;
         score += vertical_p1 * vertical_weight;
         score -= vertical_p2 * vertical_weight;
 
-        // Horizontal control evaluation using genetic parameters
         let horizontal_p1 = self.horizontal_control_score(Player::Player1);
         let horizontal_p2 = self.horizontal_control_score(Player::Player2);
         let horizontal_weight = self.genetic_params.horizontal_control_weight as i32;
         score += horizontal_p1 * horizontal_weight;
         score -= horizontal_p2 * horizontal_weight;
 
-        // Defensive evaluation using genetic parameters
         let defensive_p1 = self.defensive_score(Player::Player1);
         let defensive_p2 = self.defensive_score(Player::Player2);
         let defensive_weight = self.genetic_params.defensive_weight as i32;
         score += defensive_p1 * defensive_weight;
         score -= defensive_p2 * defensive_weight;
 
-        // Evaluation is always from Player1's perspective (positive = Player1 advantage)
-        score
-    }
-
-    pub fn position_score(&self, player: Player) -> i32 {
-        let mut score = 0;
-
-        // Dramatically prefer center columns - this is crucial for Connect Four
-        for col in 0..COLS {
-            let column_value = match col {
-                3 => 100,    // Center column is extremely valuable
-                2 | 4 => 50, // Adjacent to center
-                1 | 5 => 10, // Further from center
-                0 | 6 => 1,  // Edge columns almost worthless
-                _ => 1,
-            };
-
-            for row in 0..ROWS {
-                if self.board[col][row] == Cell::from_player(player) {
-                    score += column_value * (ROWS - row) as i32; // Higher pieces worth more
-                }
-            }
-        }
-
+        // Score is from Player1's perspective (positive = Player1 advantage).
         score
     }
 
@@ -546,22 +514,6 @@ impl GameState {
         false
     }
 
-    #[allow(dead_code)]
-    fn hash(&self) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        for col in 0..COLS {
-            for row in 0..ROWS {
-                match self.board[col][row] {
-                    Cell::Empty => hasher.write_u8(0),
-                    Cell::Player1 => hasher.write_u8(1),
-                    Cell::Player2 => hasher.write_u8(2),
-                }
-            }
-        }
-        self.current_player.hash(&mut hasher);
-        hasher.finish()
-    }
-
     pub fn mobility_score(&self, player: Player) -> i32 {
         let mut mobility = 0;
         for col in 0..COLS {
@@ -692,15 +644,9 @@ impl AI {
         state: &GameState,
         depth: u8,
     ) -> (Option<u8>, Vec<MoveEvaluation>) {
-        // Convert to Bitboard
         let bitboard = crate::solver::Bitboard::from_game_state(state);
-        
-        // Solve using the new engine
-        // Note: the depth parameter from the UI is usually small (1-5).
-        // Since our new engine is fast, we can map this to larger depths.
-        // Depth 1 -> 4
-        // Depth 3 -> 8
-        // Depth 5 -> 12
+
+        // The UI sends a shallow depth (1-5); map it to the engine's deeper search.
         let engine_depth = match depth {
             1 => 6,
             3 => 10,
@@ -709,29 +655,28 @@ impl AI {
         };
 
         let (best_move, score) = self.solver.analyze(&bitboard, engine_depth);
-        
+
         self.nodes_evaluated = self.solver.get_nodes_count() as u32;
-        self.transposition_hits = 0; // Not exposed from simple Solver yet
+        self.transposition_hits = 0;
 
         let mut move_evaluations = Vec::new();
         if let Some(mv) = best_move {
             move_evaluations.push(MoveEvaluation {
                 column: mv as u8,
-                score: score as f32, // Convert internal score to float
-                move_type: if score > 0 { "win".to_string() } else if score < 0 { "loss".to_string() } else { "draw".to_string() },
+                score: score as f32,
+                move_type: if score > 0 {
+                    "win".to_string()
+                } else if score < 0 {
+                    "loss".to_string()
+                } else {
+                    "draw".to_string()
+                },
             });
         }
-        
-        // Return result
-        // TODO: The UI expects a list of evaluations for all moves to show score breakdown.
-        // The current 'analyze' only returns the BEST move.
-        // We should update 'analyze' or call it for all moves if we want full stats.
-        // For now, let's just return the best move to verify strength.
-        
+
+        // TODO: analyze() returns only the best move; the UI's per-move breakdown is empty.
         (best_move.map(|m| m as u8), move_evaluations)
     }
-
-
 }
 
 impl Default for HeuristicAI {

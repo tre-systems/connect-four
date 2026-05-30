@@ -7,13 +7,11 @@ set -e
 
 echo "🤖 Running AI Comparison Tests..."
 
-# Build the Rust core
 echo "🔨 Building Rust AI core..."
 cd worker
 cargo build
 cd ..
 
-# Run the AI matrix test
 echo "🧪 Running AI Matrix Test..."
 cd worker
 cargo test test_ai_matrix -- --ignored --nocapture

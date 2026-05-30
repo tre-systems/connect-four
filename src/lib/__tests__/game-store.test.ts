@@ -46,15 +46,15 @@ describe('Game Store', () => {
       });
     });
 
-        it('should not set pending move when game is finished', () => {
+    it('should not set pending move when game is finished', () => {
       useGameStore.setState(state => {
         state.gameState.gameStatus = 'finished';
         state.gameState.winner = 'player1';
       });
-      
+
       const store = useGameStore.getState();
       store.actions.makeMove(3);
-      
+
       const newState = useGameStore.getState();
       expect(newState.pendingMove).toBe(null);
     });
@@ -86,49 +86,49 @@ describe('Game Store', () => {
   });
 
   describe('makeAIMove', () => {
-        it('should set aiThinking to true when starting AI move', async () => {
+    it('should set aiThinking to true when starting AI move', async () => {
       useGameStore.setState(state => {
         state.gameState.currentPlayer = 'player2';
       });
-      
+
       const store = useGameStore.getState();
       const aiMovePromise = store.actions.makeAIMove();
-      
+
       const thinkingState = useGameStore.getState();
       expect(thinkingState.aiThinking).toBe(true);
-      
+
       await aiMovePromise;
     });
 
-        it('should not start AI move when not player2 turn', async () => {
+    it('should not start AI move when not player2 turn', async () => {
       useGameStore.setState(state => {
         state.gameState.currentPlayer = 'player1';
       });
-      
+
       const store = useGameStore.getState();
       await store.actions.makeAIMove();
-      
+
       const newState = useGameStore.getState();
       expect(newState.aiThinking).toBe(false);
     });
 
-        it('should not start AI move when game is finished', async () => {
+    it('should not start AI move when game is finished', async () => {
       useGameStore.setState(state => {
         state.gameState.currentPlayer = 'player2';
         state.gameState.gameStatus = 'finished';
         state.gameState.winner = 'player1';
       });
-      
+
       const store = useGameStore.getState();
       await store.actions.makeAIMove();
-      
+
       const newState = useGameStore.getState();
       expect(newState.aiThinking).toBe(false);
     });
   });
 
   describe('reset', () => {
-        it('should reset game to initial state', () => {
+    it('should reset game to initial state', () => {
       useGameStore.setState(state => {
         state.gameState.gameStatus = 'finished';
         state.gameState.winner = 'player1';
@@ -136,10 +136,10 @@ describe('Game Store', () => {
         state.pendingMove = { column: 3, player: 'player1' };
         state.showWinnerModal = true;
       });
-      
+
       const store = useGameStore.getState();
       store.actions.reset();
-      
+
       const newState = useGameStore.getState();
       expect(newState.gameState.gameStatus).toBe('not_started');
       expect(newState.gameState.winner).toBe(null);
@@ -161,9 +161,9 @@ describe('Game Store', () => {
   });
 
   describe('game state persistence', () => {
-        it('should maintain game state structure', () => {
+    it('should maintain game state structure', () => {
       const store = useGameStore.getState();
-      
+
       expect(store.gameState).toHaveProperty('board');
       expect(store.gameState).toHaveProperty('currentPlayer');
       expect(store.gameState).toHaveProperty('gameStatus');

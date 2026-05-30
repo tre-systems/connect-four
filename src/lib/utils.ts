@@ -15,46 +15,11 @@ export function getPlayerId(): string {
   let playerId = localStorage.getItem(PLAYER_ID_KEY);
 
   if (!playerId) {
-    playerId = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    playerId = `player_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     localStorage.setItem(PLAYER_ID_KEY, playerId);
   }
 
   return playerId;
-}
-
-export function getAIName(
-  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
-): string {
-  if (!aiSource) return 'Unknown';
-  switch (aiSource) {
-    case 'client':
-      return 'Classic';
-    case 'ml':
-      return 'ML AI';
-    case 'server':
-      return 'Server AI';
-    case 'fallback':
-      return 'Fallback';
-    case 'heuristic':
-      return 'Heuristic';
-    default:
-      return 'Unknown';
-  }
-}
-
-export function getAISubtitle(
-  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
-): string {
-  switch (aiSource) {
-    case 'client':
-      return 'Minimax algorithm';
-    case 'ml':
-      return 'Neural network model';
-    case 'heuristic':
-      return 'Immediate evaluation';
-    default:
-      return '';
-  }
 }
 
 export const isProduction = () => {
@@ -76,11 +41,3 @@ export const isDevelopment = () => {
     hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development'
   );
 };
-
-export function batch<T>(array: T[], size: number): T[][] {
-  const batched: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    batched.push(array.slice(i, i + size));
-  }
-  return batched;
-}

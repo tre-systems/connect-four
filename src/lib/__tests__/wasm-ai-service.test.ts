@@ -16,12 +16,7 @@ interface WASMGameState {
 
 describe('WASM AI Service - Player Value Conversion', () => {
   const convertGameStateToWASM = (gameState: GameState): WASMGameState => {
-    const board = gameState.board.map(col =>
-      col.map(cell => {
-        if (cell === null) return 'empty';
-        return cell;
-      })
-    );
+    const board = gameState.board.map(col => col.map(cell => cell ?? 'empty'));
 
     return {
       board,

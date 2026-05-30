@@ -16,5 +16,3 @@ export const games = sqliteTable('games', {
     .notNull()
     .default('classic'),
 });
-
-export const dbTables = { games };

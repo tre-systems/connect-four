@@ -8,6 +8,15 @@ import { useUIStore } from './ui-store';
 
 const LATEST_VERSION = 1;
 
+const emptyGameState = (): GameState => ({
+  board: Array.from({ length: 7 }, () => Array.from({ length: 6 }, () => null)),
+  currentPlayer: 'player1',
+  gameStatus: 'not_started',
+  winner: null,
+  history: [],
+  winningLine: null,
+});
+
 type GameStore = {
   gameState: GameState;
   aiThinking: boolean;
@@ -35,14 +44,7 @@ type GameStore = {
 export const useGameStore = create<GameStore>()(
   persist(
     immer((set, get) => ({
-      gameState: {
-        board: Array.from({ length: 7 }, () => Array.from({ length: 6 }, () => null)),
-        currentPlayer: 'player1',
-        gameStatus: 'not_started' as const,
-        winner: null,
-        history: [],
-        winningLine: null,
-      },
+      gameState: emptyGameState(),
       aiThinking: false,
       pendingMove: null,
       showWinnerModal: false,
@@ -52,13 +54,11 @@ export const useGameStore = create<GameStore>()(
       gameMode: 'human-vs-ai' as GameMode,
       actions: {
         initialize: () => {
-          // Initialize WASM AI in the background
           initializeWASMAI().catch(error => {
             console.warn('Failed to initialize WASM AI:', error);
           });
         },
         startGame: () => {
-          // Create a fresh game with new random starting player
           set(state => {
             state.gameState = { ...initializeGame() };
             state.aiThinking = false;
@@ -70,7 +70,6 @@ export const useGameStore = create<GameStore>()(
           const { gameState } = get();
           if (gameState.gameStatus !== 'playing') return;
 
-          // Set pending move for animation
           set(state => {
             state.pendingMove = { column, player: gameState.currentPlayer };
           });
@@ -84,9 +83,7 @@ export const useGameStore = create<GameStore>()(
             state.gameState = newState;
             state.pendingMove = null;
 
-            // If game is finished with a winner, delay showing the modal
             if (newState.gameStatus === 'finished' && newState.winner) {
-              // Don't show modal immediately - let the win animation play first
               state.showWinnerModal = false;
             }
           });
@@ -94,8 +91,6 @@ export const useGameStore = create<GameStore>()(
         makeAIMove: async () => {
           const { gameState, selectedAI, player1AI, player2AI, gameMode } = get();
 
-          // In AI vs AI mode, both players are AI
-          // In human vs AI mode, only player2 is AI
           const isAITurn =
             gameMode === 'ai-vs-ai' ||
             (gameMode === 'human-vs-ai' && gameState.currentPlayer === 'player2');
@@ -106,7 +101,6 @@ export const useGameStore = create<GameStore>()(
             state.aiThinking = true;
           });
 
-          // Add a small delay to make AI thinking visible
           setTimeout(async () => {
             const currentState = get().gameState;
             const currentGameMode = get().gameMode;
@@ -116,22 +110,19 @@ export const useGameStore = create<GameStore>()(
 
             if (currentState.gameStatus === 'playing' && isStillAITurn) {
               try {
-                // Determine which AI to use based on current player
-                let aiTypeToUse: AIType;
-                if (currentGameMode === 'ai-vs-ai') {
-                  aiTypeToUse = currentState.currentPlayer === 'player1' ? player1AI : player2AI;
-                } else {
-                  aiTypeToUse = selectedAI; // For human vs AI, use the selected AI
-                }
+                const aiTypeToUse: AIType =
+                  currentGameMode === 'ai-vs-ai'
+                    ? currentState.currentPlayer === 'player1'
+                      ? player1AI
+                      : player2AI
+                    : selectedAI;
 
                 const aiColumn = await makeAIMove(currentState, aiTypeToUse);
-                // Set pending move for AI animation
                 set(state => {
                   state.pendingMove = { column: aiColumn, player: currentState.currentPlayer };
                   state.aiThinking = false;
                 });
 
-                // Complete the AI move after animation delay
                 setTimeout(() => {
                   const { gameState: updatedState, pendingMove } = get();
                   if (pendingMove) {
@@ -140,7 +131,6 @@ export const useGameStore = create<GameStore>()(
                       state.gameState = newState;
                       state.pendingMove = null;
 
-                      // If game is finished with a winner, delay showing the modal
                       if (newState.gameStatus === 'finished' && newState.winner) {
                         state.showWinnerModal = false;
                       }
@@ -149,7 +139,6 @@ export const useGameStore = create<GameStore>()(
                 }, 800);
               } catch (error) {
                 console.error('AI move calculation failed:', error);
-                // Show error to user via UI store
                 const errorMessage = `AI calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please refresh the page.`;
                 useUIStore.getState().actions.showError(errorMessage);
                 set(state => {
@@ -157,7 +146,6 @@ export const useGameStore = create<GameStore>()(
                 });
               }
             } else {
-              // Game state changed, reset thinking state
               set(state => {
                 state.aiThinking = false;
               });
@@ -166,14 +154,7 @@ export const useGameStore = create<GameStore>()(
         },
         reset: () => {
           set(state => {
-            state.gameState = {
-              board: Array.from({ length: 7 }, () => Array.from({ length: 6 }, () => null)),
-              currentPlayer: 'player1',
-              gameStatus: 'not_started' as const,
-              winner: null,
-              history: [],
-              winningLine: null,
-            };
+            state.gameState = emptyGameState();
             state.aiThinking = false;
             state.pendingMove = null;
             state.showWinnerModal = false;
@@ -187,7 +168,6 @@ export const useGameStore = create<GameStore>()(
         setAI: (aiType: AIType) => {
           set(state => {
             state.selectedAI = aiType;
-            // For human vs AI mode, set player2AI to the selected AI
             state.player2AI = aiType;
           });
         },
@@ -234,6 +214,5 @@ export const useGameStore = create<GameStore>()(
   ),
 );
 
-export const useGameStoreActions = () => useGameStore(state => state.actions);
 export const useGameState = () => useGameStore(state => state.gameState);
 export const useGameActions = () => useGameStore(state => state.actions);

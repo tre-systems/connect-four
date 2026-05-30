@@ -144,8 +144,8 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                   Game End
                 </h3>
                 <p className="text-sm leading-relaxed">
-                          The game ends when a player connects 4 pieces in a row, or when the board is
-        completely full (a draw). The first player to get 4 in a row wins!
+                  The game ends when a player connects 4 pieces in a row, or when the board is
+                  completely full (a draw). The first player to get 4 in a row wins!
                 </p>
               </div>
 

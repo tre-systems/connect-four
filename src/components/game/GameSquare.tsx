@@ -11,6 +11,7 @@ interface GameSquareProps {
   player: Player | null;
   isClickable: boolean;
   onColumnClick: (column: number) => void;
+  isWinning?: boolean;
 }
 
 export default function GameSquare({
@@ -20,7 +21,7 @@ export default function GameSquare({
   isClickable,
   onColumnClick,
   isWinning = false,
-}: GameSquareProps & { isWinning?: boolean }) {
+}: GameSquareProps) {
   const handleSquareClick = () => {
     if (isClickable) {
       onColumnClick(column);
@@ -32,7 +33,7 @@ export default function GameSquare({
       className={cn(
         'aspect-square relative flex items-center justify-center overflow-hidden',
         'board-square rounded-lg',
-        isClickable && 'clickable-square cursor-pointer'
+        isClickable && 'clickable-square cursor-pointer',
       )}
       whileHover={{
         scale: isClickable ? 1.02 : 1,
@@ -72,7 +73,6 @@ export default function GameSquare({
         />
       )}
 
-      {/* Drop indicator for empty squares in clickable columns */}
       {!player && isClickable && (
         <motion.div
           className="absolute inset-0 rounded-lg border-2 border-blue-400/30 pointer-events-none"

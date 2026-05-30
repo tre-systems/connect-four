@@ -10,37 +10,33 @@ describe('ML AI Worker', () => {
     vi.clearAllMocks();
   });
 
+  // Mirrors the worker's response transform: timings default to {} when absent.
+  const transformMLResponse = (responseJson: string) => {
+    const parsed = JSON.parse(responseJson);
+    return {
+      move: parsed.move,
+      evaluation: parsed.evaluation,
+      thinking: parsed.thinking,
+      diagnostics: parsed.diagnostics,
+      timings: parsed.timings || {},
+    };
+  };
+
+  const baseResponse = {
+    move: 0,
+    evaluation: 0.5,
+    thinking: 'Test move',
+    diagnostics: {
+      valid_moves: [0, 1],
+      move_evaluations: [],
+      value_network_output: 0.5,
+      policy_network_outputs: [0.5, 0.5],
+    },
+  };
+
   it('should handle responses without timings gracefully', () => {
-    // This test verifies that the worker can handle responses that don't include timings
-    // without throwing errors
+    const response = transformMLResponse(JSON.stringify(baseResponse));
 
-    const responseWithoutTimings = {
-      move: 0,
-      evaluation: 0.5,
-      thinking: 'Test move',
-      diagnostics: {
-        valid_moves: [0, 1],
-        move_evaluations: [],
-        value_network_output: 0.5,
-        policy_network_outputs: [0.5, 0.5],
-      },
-    };
-
-    // Simulate the transformMLResponse function
-    const transformMLResponse = (responseJson: string) => {
-      const parsed = JSON.parse(responseJson);
-      return {
-        move: parsed.move,
-        evaluation: parsed.evaluation,
-        thinking: parsed.thinking,
-        diagnostics: parsed.diagnostics,
-        timings: parsed.timings || {},
-      };
-    };
-
-    const response = transformMLResponse(JSON.stringify(responseWithoutTimings));
-
-    // These should not throw errors
     expect(response.timings).toBeDefined();
     expect(response.timings).toEqual({});
     expect(response.timings?.aiMoveCalculation).toBeUndefined();
@@ -49,30 +45,11 @@ describe('ML AI Worker', () => {
 
   it('should handle responses with timings correctly', () => {
     const responseWithTimings = {
-      move: 0,
-      evaluation: 0.5,
-      thinking: 'Test move',
-      diagnostics: {
-        valid_moves: [0, 1],
-        move_evaluations: [],
-        value_network_output: 0.5,
-        policy_network_outputs: [0.5, 0.5],
-      },
+      ...baseResponse,
       timings: {
         aiMoveCalculation: 100,
         totalHandlerTime: 150,
       },
-    };
-
-    const transformMLResponse = (responseJson: string) => {
-      const parsed = JSON.parse(responseJson);
-      return {
-        move: parsed.move,
-        evaluation: parsed.evaluation,
-        thinking: parsed.thinking,
-        diagnostics: parsed.diagnostics,
-        timings: parsed.timings || {},
-      };
     };
 
     const response = transformMLResponse(JSON.stringify(responseWithTimings));

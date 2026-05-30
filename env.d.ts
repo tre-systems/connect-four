@@ -5,10 +5,6 @@ interface CloudflareEnv {
   ASSETS: Fetcher;
 }
 
-declare global {
-  var DB: D1Database;
-}
-
 declare module '/wasm/connect_four_ai_core.js' {
   export class ConnectFourAI {
     free(): void;

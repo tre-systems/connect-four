@@ -54,19 +54,16 @@ describe('SoundEffects', () => {
         soundEffects.buttonClick(),
       ];
 
-      // All methods should return promises
       promises.forEach(promise => {
         expect(promise).toBeInstanceOf(Promise);
       });
 
-      // Should not throw when called
       await expect(Promise.all(promises)).resolves.toBeDefined();
     });
 
     it('should not play sounds when disabled', async () => {
       soundEffects.setEnabled(false);
 
-      // Should not throw when disabled
       await expect(soundEffects.pieceMove()).resolves.toBeUndefined();
       await expect(soundEffects.columnSelect()).resolves.toBeUndefined();
       await expect(soundEffects.buttonClick()).resolves.toBeUndefined();
@@ -76,10 +73,7 @@ describe('SoundEffects', () => {
   describe('browser environment handling', () => {
     it('should handle missing AudioContext gracefully', async () => {
       const originalWindow = global.window;
-      Object.defineProperty(global, 'window', {
-        value: {},
-        writable: true,
-      });
+      Object.defineProperty(global, 'window', { value: {}, writable: true });
 
       await expect(soundEffects.pieceMove()).resolves.toBeUndefined();
 
@@ -124,10 +118,6 @@ describe('SoundEffects', () => {
       expect(setTimeoutSpy).toHaveBeenCalled();
 
       setTimeoutSpy.mockRestore();
-    });
-
-    it('should handle multiple setTimeout calls in complex effects', async () => {
-      
     });
   });
 });

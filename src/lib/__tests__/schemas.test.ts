@@ -62,14 +62,14 @@ describe('Schemas', () => {
       expect(() => MoveRecordSchema.parse(validMove)).not.toThrow();
     });
 
-    it('should validate capture move', () => {
-      const captureMove = {
+    it('should validate a player2 move record', () => {
+      const player2Move = {
         player: 'player2' as const,
         column: 0,
         row: 4,
       };
 
-      expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
+      expect(() => MoveRecordSchema.parse(player2Move)).not.toThrow();
     });
   });
 });

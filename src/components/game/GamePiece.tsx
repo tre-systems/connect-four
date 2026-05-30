@@ -6,13 +6,14 @@ import { motion } from 'framer-motion';
 interface GamePieceProps {
   player: 'player1' | 'player2';
   isClickable?: boolean;
+  isWinning?: boolean;
 }
 
 const GamePiece = memo(function GamePiece({
   player,
   isClickable = false,
   isWinning = false,
-}: GamePieceProps & { isWinning?: boolean }) {
+}: GamePieceProps) {
   const isPlayer1 = player === 'player1';
   const colors = isPlayer1
     ? {
@@ -77,11 +78,10 @@ const GamePiece = memo(function GamePiece({
       }}
       data-testid={`game-piece-${player}-${isClickable ? 'clickable' : 'static'}`}
     >
-      {/* Enhanced gradient overlays */}
       <div className={`absolute inset-0 bg-gradient-to-br ${colors.highlight}`} />
       <div className="absolute inset-0 bg-gradient-to-tl from-black/30 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent" />
-      {/* Animated inner glow */}
+
       <motion.div
         className="absolute inset-0 rounded-full"
         animate={{
@@ -113,7 +113,6 @@ const GamePiece = memo(function GamePiece({
         />
       )}
 
-      {/* Enhanced center highlight */}
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
           className={`w-1/3 h-1/3 rounded-full ${isPlayer1 ? 'bg-red-300' : 'bg-yellow-300'} shadow-inner`}
@@ -132,7 +131,6 @@ const GamePiece = memo(function GamePiece({
         />
       </div>
 
-      {/* Floating sparkle effect */}
       <motion.div
         className="absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full"
         animate={{

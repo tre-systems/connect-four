@@ -8,25 +8,17 @@ let db: DrizzleD1Database<typeof schema> | BetterSQLite3Database<typeof schema> 
 export const getDb = async () => {
   if (!db) {
     if (process.env.NODE_ENV === 'production') {
-      try {
-        const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-        const { env } = await getCloudflareContext({ async: true });
+      const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+      const { env } = await getCloudflareContext({ async: true });
 
-        if (!env.DB) {
-          throw new Error('DB binding is not available in Cloudflare context');
-        }
-
-        db = drizzleD1(env.DB, { schema });
-      } catch (error) {
-        throw error;
+      if (!env.DB) {
+        throw new Error('DB binding is not available in Cloudflare context');
       }
+
+      db = drizzleD1(env.DB, { schema });
     } else {
-      try {
-        const sqlite = new Database('local.db');
-        db = drizzleSqlite(sqlite, { schema });
-      } catch (error) {
-        throw error;
-      }
+      const sqlite = new Database('local.db');
+      db = drizzleSqlite(sqlite, { schema });
     }
   }
 

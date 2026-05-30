@@ -149,7 +149,7 @@ impl NeuralNetwork {
             } else {
                 // Hidden layers: linear + ReLU
                 current = layer.forward(&current);
-                
+
                 // Optional skip connection (ResNet style)
                 if self.config.use_skip_connections && current.len() == prev.len() {
                     current = &current + &prev;
@@ -229,11 +229,11 @@ impl NeuralNetwork {
         for i in 0..num_layers - 1 {
             let prev = activations.last().unwrap().clone();
             let (mut activated, linear) = self.layers[i].forward_with_cache(&prev);
-            
+
             if self.config.use_skip_connections && activated.len() == prev.len() {
                 activated = &activated + &prev;
             }
-            
+
             activations.push(activated);
             linear_outputs.push(linear);
         }
@@ -242,7 +242,7 @@ impl NeuralNetwork {
         let last_layer = &self.layers[num_layers - 1];
         let last_linear = last_layer.forward_linear(activations.last().unwrap());
         let mut output = last_linear.clone();
-        
+
         let (loss, gradient_wrt_linear) = if self.config.output_size == 1 {
             // Value Network: Tanh activation
             output.mapv_inplace(|x| x.tanh());
@@ -271,7 +271,7 @@ impl NeuralNetwork {
         // 3. Backward Pass (Output Layer First)
         let output_layer_idx = num_layers - 1;
         let layer_input = &activations[output_layer_idx];
-        
+
         let shape = self.layers[output_layer_idx].weights.shape();
         let mut weight_gradients = Array2::zeros((shape[0], shape[1]));
         for i in 0..shape[0] {
@@ -297,7 +297,7 @@ impl NeuralNetwork {
             );
 
             layer_gradients.push((wg, bg));
-            
+
             // If skip connection was used, gradient also flows directly to input
             if self.config.use_skip_connections && layer_input.len() == self.layers[layer_idx].weights.shape()[1] {
                 gradient = &input_gradient + &gradient;
@@ -566,9 +566,9 @@ mod tests {
             .iter()
             .zip(final_output.iter())
             .any(|(init, final_val)| (init - final_val).abs() > 1e-6);
-        
+
         let loss_decreased = losses.len() > 1 && losses[losses.len() - 1] < losses[0] * 0.95;
-        
+
         assert!(
             output_changed || loss_decreased || losses[losses.len() - 1] < 1.0,
             "Policy network should show training progress (output changed: {}, loss decreased: {}, final loss: {})",

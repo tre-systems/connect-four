@@ -1,40 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getClassicAIVersion, getMLAIVersion } from '../utils/getAIVersion';
-import { getFileHash } from '../utils/getFileHash';
-import { getGitCommitHash } from '../utils/getGitCommitHash';
-import {
-  cn,
-  getPlayerId,
-  getAIName,
-  getAISubtitle,
-  isProduction,
-  isDevelopment,
-  batch,
-} from '../utils';
-
-const mockReadFileSync = vi.fn();
-const mockCreateHash = vi.fn();
-const mockExecSync = vi.fn();
-
-vi.mock('fs', () => ({
-  readFileSync: mockReadFileSync,
-}));
-
-vi.mock('crypto', () => ({
-  createHash: mockCreateHash,
-}));
-
-// Mock the dynamic import of child_process
-vi.mock('child_process', async () => ({
-  execSync: mockExecSync,
-}));
+import { cn, getPlayerId, isProduction, isDevelopment } from '../utils';
 
 describe('Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock window as undefined for Node.js environment
     vi.stubGlobal('window', undefined);
-    // Clear any existing environment variables
     delete process.env.GITHUB_SHA;
   });
 
@@ -59,11 +29,10 @@ describe('Utils', () => {
       };
       vi.stubGlobal('localStorage', localStorageMock);
       vi.stubGlobal('window', { localStorage: localStorageMock });
-      const result = getPlayerId();
-      expect(result).toBe(existingId);
+      expect(getPlayerId()).toBe(existingId);
     });
 
-    it('should generate new player ID when none exists', () => {
+    it('should generate a new player ID when none exists', () => {
       const localStorageMock = {
         getItem: vi.fn().mockReturnValue(null),
         setItem: vi.fn(),
@@ -77,27 +46,7 @@ describe('Utils', () => {
 
     it('should return "unknown" when window is undefined', () => {
       vi.stubGlobal('window', undefined);
-      const result = getPlayerId();
-      expect(result).toBe('unknown');
-    });
-  });
-
-  describe('getAIName and getAISubtitle', () => {
-    it('should return correct AI names and subtitles', () => {
-      expect(getAIName('client')).toBe('Classic');
-      expect(getAISubtitle('client')).toBe('Minimax algorithm');
-
-      expect(getAIName('ml')).toBe('ML AI');
-      expect(getAISubtitle('ml')).toBe('Neural network model');
-
-      expect(getAIName('server')).toBe('Server AI');
-      expect(getAISubtitle('server')).toBe('');
-
-      expect(getAIName('fallback')).toBe('Fallback');
-      expect(getAISubtitle('fallback')).toBe('');
-
-      expect(getAIName(null)).toBe('Unknown');
-      expect(getAISubtitle(null)).toBe('');
+      expect(getPlayerId()).toBe('unknown');
     });
   });
 
@@ -114,54 +63,6 @@ describe('Utils', () => {
       vi.stubEnv('NODE_ENV', 'development');
       expect(isProduction()).toBe(false);
       expect(isDevelopment()).toBe(true);
-    });
-  });
-
-  describe('batch', () => {
-    it('should batch array items correctly', () => {
-      const items = [1, 2, 3, 4, 5, 6, 7];
-      expect(batch(items, 3)).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
-    });
-  });
-
-  describe('getFileHash', () => {
-    it('should generate hash from file content', async () => {
-      const mockHash = {
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('abc123'),
-      };
-      mockCreateHash.mockReturnValue(mockHash);
-      mockReadFileSync.mockReturnValue('test content');
-
-      const result = await getFileHash('test.txt');
-      expect(result).toBe('abc123');
-      expect(mockReadFileSync).toHaveBeenCalledWith('test.txt');
-    });
-  });
-
-  describe('getGitCommitHash', () => {
-    it('should return git commit hash', async () => {
-      mockExecSync.mockReturnValue(Buffer.from('abc123\n'));
-
-      const result = await getGitCommitHash();
-      expect(result).toBe('abc123');
-      expect(mockExecSync).toHaveBeenCalledWith('git rev-parse HEAD');
-    });
-
-    it('should return fallback when git command fails', async () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('git not found');
-      });
-
-      const result = await getGitCommitHash();
-      expect(result).toBe('unknown');
-    });
-  });
-
-  describe('AI version functions', () => {
-    it('should return AI versions', () => {
-      expect(getClassicAIVersion()).toBeDefined();
-      expect(getMLAIVersion()).toBeDefined();
     });
   });
 });

@@ -16,7 +16,6 @@ export function printBoard(board: Board, moveInfo?: string) {
   const header = moveInfo ? `\n${moveInfo}` : '\nBoard:';
   console.log(header);
 
-  // Print board from top to bottom (row 0 to 5)
   for (let row = 0; row < ROWS; row++) {
     let rowStr = '';
     for (let col = 0; col < COLS; col++) {
@@ -26,7 +25,7 @@ export function printBoard(board: Board, moveInfo?: string) {
       } else if (cell === 'player2') {
         rowStr += '🟡';
       } else {
-        rowStr += '⚫'; // Black circle for empty cells
+        rowStr += '⚫';
       }
     }
     console.log(rowStr);
@@ -47,21 +46,17 @@ export function checkWin(
   board: Board,
   col: number,
   row: number,
-  player: Player
+  player: Player,
 ): WinningLine | null {
-  // Check horizontal
   const horizontalLine = checkDirection(board, col, row, 1, 0, player);
   if (horizontalLine) return { positions: horizontalLine, direction: 'horizontal' };
 
-  // Check vertical
   const verticalLine = checkDirection(board, col, row, 0, 1, player);
   if (verticalLine) return { positions: verticalLine, direction: 'vertical' };
 
-  // Check diagonal /
   const diagonal1Line = checkDirection(board, col, row, 1, 1, player);
   if (diagonal1Line) return { positions: diagonal1Line, direction: 'diagonal' };
 
-  // Check diagonal \
   const diagonal2Line = checkDirection(board, col, row, 1, -1, player);
   if (diagonal2Line) return { positions: diagonal2Line, direction: 'diagonal' };
 
@@ -74,7 +69,7 @@ export function checkDirection(
   row: number,
   dCol: number,
   dRow: number,
-  player: Player
+  player: Player,
 ): Array<{ column: number; row: number }> | null {
   const positions: Array<{ column: number; row: number }> = [];
 

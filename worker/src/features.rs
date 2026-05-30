@@ -43,25 +43,25 @@ impl GameFeatures {
         // Indices 84-98
         features[idx] = Self::center_control_score(state, current_player) as f32 / 10.0; idx += 1;
         features[idx] = Self::center_control_score(state, opponent) as f32 / 10.0; idx += 1;
-        
+
         features[idx] = Self::pieces_count(state, current_player) as f32 / 21.0; idx += 1;
         features[idx] = Self::pieces_count(state, opponent) as f32 / 21.0; idx += 1;
-        
+
         features[idx] = Self::threat_score(state, current_player) as f32 / 100.0; idx += 1;
         features[idx] = Self::threat_score(state, opponent) as f32 / 100.0; idx += 1;
-        
+
         features[idx] = Self::mobility_score(state, current_player) as f32 / 10.0; idx += 1;
         features[idx] = Self::mobility_score(state, opponent) as f32 / 10.0; idx += 1;
-        
+
         features[idx] = Self::vertical_control_score(state, current_player) as f32 / 10.0; idx += 1;
         features[idx] = Self::vertical_control_score(state, opponent) as f32 / 10.0; idx += 1;
-        
+
         features[idx] = Self::horizontal_control_score(state, current_player) as f32 / 10.0; idx += 1;
         features[idx] = Self::horizontal_control_score(state, opponent) as f32 / 10.0; idx += 1;
-        
+
         features[idx] = Self::diagonal_control_score(state, current_player) as f32 / 10.0; idx += 1;
         features[idx] = Self::diagonal_control_score(state, opponent) as f32 / 10.0; idx += 1;
-        
+
         features[idx] = Self::blocking_score(state, current_player) as f32 / 10.0;
 
         // Current player indication (Index 99)
@@ -342,7 +342,7 @@ mod tests {
 
         // Threat score should be computed
         // P1 has threats, but current_player is P2. So P1 is opponent (Index 47).
-        let threat_score_idx = 47; 
+        let threat_score_idx = 47;
         assert!(features.features[threat_score_idx] > 0.0);
     }
 

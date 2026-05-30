@@ -84,7 +84,7 @@ export default function PWAInstallPrompt() {
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
               <Download className="h-5 w-5 text-blue-400" />
-                              <h3 className="text-sm font-semibold text-white">Install Connect 4</h3>
+              <h3 className="text-sm font-semibold text-white">Install Connect 4</h3>
             </div>
             <p className="text-xs text-slate-300 mb-3">
               Add to your home screen for easy access and offline play!

@@ -21,7 +21,6 @@ export default function GameControls({
     <>
       <hr className="my-4 border-white/10" />
       <div className="flex items-center justify-between w-full">
-        {/* Dev-only controls on the left */}
         {isDevelopment() && (
           <div className="flex items-center space-x-2">
             <motion.button
@@ -37,7 +36,6 @@ export default function GameControls({
           </div>
         )}
 
-        {/* Main controls on the right */}
         <div className="flex items-center space-x-3">
           <motion.button
             onClick={onToggleSound}

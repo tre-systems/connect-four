@@ -192,7 +192,6 @@ export default function ConnectFour() {
               onShowHowToPlay={handleShowHowToPlay}
               watchMode={gameMode === 'ai-vs-ai'}
               gameMode={gameMode}
-              data-testid="game-board-component"
             />
           </div>
         )}

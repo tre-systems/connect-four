@@ -7,18 +7,15 @@ const dbPath = './local.db';
 
 console.log('Resetting local database...');
 
-// Remove existing database if it exists
 if (existsSync(dbPath)) {
   console.log('Removing existing database...');
   unlinkSync(dbPath);
 }
 
-// Create new database
 console.log('Creating new database...');
 const sqlite = new Database(dbPath);
 const db = drizzle(sqlite);
 
-// Apply migrations
 console.log('Applying migrations...');
 migrate(db, { migrationsFolder: './migrations' });
 

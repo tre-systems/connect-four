@@ -18,7 +18,7 @@ interface DroppingPiece {
 
 export function useGameAnimations(
   gameState: GameState,
-  boardRef: React.RefObject<HTMLDivElement | null>
+  boardRef: React.RefObject<HTMLDivElement | null>,
 ) {
   const [celebrations, setCelebrations] = useState<Celebration[]>([]);
   const [droppingPieces, setDroppingPieces] = useState<DroppingPiece[]>([]);
@@ -28,30 +28,29 @@ export function useGameAnimations(
 
   useEffect(() => {
     if (gameState.gameStatus === 'finished' && gameState.winner) {
+      const winner = gameState.winner;
       const boardRect = boardRef.current?.getBoundingClientRect();
       if (boardRect) {
-        // eslint-disable-next-line
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCelebrations(prevCelebrations => [
           ...prevCelebrations,
           {
-            id: `celebration-${Date.now()}-${gameState.winner}`,
+            id: `celebration-${Date.now()}-${winner}`,
             position: {
               x: boardRect.left + boardRect.width / 2,
               y: boardRect.top + boardRect.height / 2,
             },
-            player: gameState.winner as Player,
+            player: winner,
           },
         ]);
       }
 
-      // Show Connect Four win animation
       if (gameState.winningLine) {
         setShowWinAnimation(true);
-        // Play win animation sound
         soundEffects.winAnimation();
       }
     }
-  }, [gameState.gameStatus, gameState.winner, gameState.winningLine]);
+  }, [gameState.gameStatus, gameState.winner, gameState.winningLine, boardRef]);
 
   useEffect(() => {
     celebrations.forEach(celebration => {
@@ -61,19 +60,17 @@ export function useGameAnimations(
     });
   }, [celebrations]);
 
-  // Handle dropping piece animations
   useEffect(() => {
     if (pendingMove) {
       const { column, player } = pendingMove;
 
-      // Calculate the row where the piece will land
       const col = gameState.board[column];
       const row = col.lastIndexOf(null);
-      if (row === -1) return; // Column full
+      if (row === -1) return;
 
       const dropId = `drop-${Date.now()}-${column}-${row}`;
 
-      // eslint-disable-next-line
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDroppingPieces(prev => [
         ...prev,
         {
@@ -84,7 +81,6 @@ export function useGameAnimations(
         },
       ]);
 
-      // After animation completes, actually make the move
       setTimeout(() => {
         setDroppingPieces(prev => prev.filter(p => p.id !== dropId));
         actions.completeMove();
@@ -94,10 +90,9 @@ export function useGameAnimations(
 
   const handleWinAnimationComplete = () => {
     setShowWinAnimation(false);
-    // Show the winner modal after the win animation completes
     setTimeout(() => {
       actions.showWinnerModal();
-    }, 500); // Small delay for smooth transition
+    }, 500);
   };
 
   return {

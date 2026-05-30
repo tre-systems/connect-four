@@ -9,20 +9,13 @@ export default function NetworkStatus() {
 
   useEffect(() => {
     const updateOnlineStatus = () => {
-      const online = navigator.onLine;
-      setIsOnline(online);
-
-      // Show status briefly when going offline/online
+      setIsOnline(navigator.onLine);
       setShowStatus(true);
-      const timer = setTimeout(() => setShowStatus(false), 3000);
-
-      return () => clearTimeout(timer);
+      setTimeout(() => setShowStatus(false), 3000);
     };
 
-    // Set initial status
     updateOnlineStatus();
 
-    // Listen for online/offline events
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 
@@ -35,9 +28,7 @@ export default function NetworkStatus() {
   if (!showStatus) return null;
 
   return (
-    <div
-      className={`fixed top-4 left-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center`}
-    >
+    <div className="fixed top-4 left-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center">
       {isOnline ? (
         <Wifi className="h-5 w-5 text-green-400" />
       ) : (

@@ -47,7 +47,6 @@ impl Default for MLAI {
 
 impl MLAI {
     pub fn new() -> Self {
-        // Create networks with appropriate sizes for Connect Four
         // Architecture: 4 hidden layers of 128 units with skip connections (ResNet-lite)
         let value_config = NetworkConfig {
             input_size: 100,
@@ -62,9 +61,7 @@ impl MLAI {
             use_skip_connections: true,
         };
 
-        // Adaptive simulation count: 
-        // - Debug: 200 sims
-        // - Release (Native & WASM): 4000 sims (Professional Tournament Strength)
+        // Fewer simulations in debug for speed; full strength in release (native and WASM)
         let simulations = if cfg!(debug_assertions) { 200 } else { 4000 };
 
         MLAI {
@@ -138,7 +135,7 @@ impl MLAI {
                 move_type: "mcts_visit_prob".to_string(),
             });
         }
-        
+
         move_evaluations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
         MLResponse {
@@ -146,9 +143,9 @@ impl MLAI {
             evaluation: raw_value,
             thinking: format!(
                 "MCTS searched {} sims. Best move col {} with visit prob {:.3}. Terminals: {}. Raw Value: {:.3}",
-                self.mcts_simulations, 
-                best_move, 
-                move_probs[best_move as usize], 
+                self.mcts_simulations,
+                best_move,
+                move_probs[best_move as usize],
                 mcts.terminal_nodes_found,
                 raw_value
             ),
@@ -160,8 +157,6 @@ impl MLAI {
             },
         }
     }
-
-
 
     pub fn evaluate_position(&self, state: &GameState) -> f32 {
         let features = GameFeatures::from_game_state(state);

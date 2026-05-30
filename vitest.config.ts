@@ -7,9 +7,9 @@ export default defineConfig({
     setupFiles: ['./src/lib/__tests__/setup.ts'],
     globals: true,
     css: false,
-    testTimeout: 10000, // 10 second default timeout
-    hookTimeout: 10000, // 10 second timeout for hooks
-    teardownTimeout: 5000, // 5 second timeout for teardown
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    teardownTimeout: 5000,
     exclude: [
       'node_modules',
       '**/node_modules/**',
@@ -41,7 +41,6 @@ export default defineConfig({
       exclude: [
         'src/lib/sound-effects.ts',
         'src/lib/types.ts',
-        'src/lib/ai.worker.ts',
         'node_modules/**',
         '**/node_modules/**',
         'src/lib/__tests__/**',
@@ -68,17 +67,9 @@ export default defineConfig({
         '**/setup.ts',
         'src/app/**',
         'src/components/**',
-        // AI worker files below are excluded because they depend on browser/worker APIs and cannot be reliably tested in Node
+        // AI service files depend on browser/worker APIs and cannot be reliably tested in Node
         'src/lib/wasm-ai-service.ts',
-        'src/lib/ml-ai-service.ts',
         'src/lib/__tests__/wasm-ai-service.test.ts',
-        'src/lib/__tests__/ml-ai-service.test.ts',
-        // Utility files that depend on Node.js APIs and file system operations
-        'src/lib/utils/getFileHash.ts',
-        'src/lib/utils/getGitCommitHash.ts',
-        // Worker files that cannot be tested in Node environment
-        'src/lib/ai.worker.ts',
-        'src/lib/ml-ai.worker.ts',
       ],
       include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
     },

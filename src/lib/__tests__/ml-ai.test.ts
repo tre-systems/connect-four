@@ -42,7 +42,6 @@ describe('ML AI Integration', () => {
 
     const gameState = initializeGame();
 
-    // Test that we can get an ML move
     const result = await service.getMLMove(gameState);
 
     expect(result).toBeDefined();
@@ -60,7 +59,6 @@ describe('ML AI Integration', () => {
 
     const gameState = initializeGame();
 
-    // Test that we can get a classic AI move
     const result = await service.getBestMove(gameState, 1);
 
     expect(result).toBeDefined();

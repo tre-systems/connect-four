@@ -64,7 +64,6 @@ export default function AISelectionPanel({ onStartGame }: AISelectionPanelProps)
             colorClass={option.colorClass}
             borderColorClass={option.borderColorClass}
             icon={option.icon}
-            isSelected={false}
             onClick={() => handleAISelection(option.aiType)}
             data-testid={`ai-selection-${option.aiType}`}
           />

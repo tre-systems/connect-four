@@ -13,8 +13,6 @@ use serde_wasm_bindgen;
 use serde::{Serialize, Deserialize};
 use ts_rs::TS;
 
-// ... imports ...
-
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export)]
 #[serde(rename_all = "camelCase")]
@@ -119,19 +117,16 @@ impl ConnectFourAI {
         let state: GameState = serde_wasm_bindgen::from_value(board_state.clone())
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-        // Check if game is over
         if state.is_game_over() {
             return Err(JsValue::from_str("Game is already over"));
         }
 
-        // Get valid moves
         let valid_moves = state.get_valid_moves();
         if valid_moves.is_empty() {
             return Err(JsValue::from_str("No valid moves available"));
         }
         let ml_response = self.ml_ai.get_best_move(&state);
 
-        // ALWAYS log the thinking string to browser console for diagnostics
         #[cfg(feature = "wasm")]
         web_sys::console::log_1(&JsValue::from_str(&format!("🧠 ML AI: {}", ml_response.thinking)));
 
@@ -144,7 +139,6 @@ impl ConnectFourAI {
 
         Ok(serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
-// ...
 
     pub fn evaluate_position(&self, board_state: &JsValue) -> Result<f32, JsValue> {
         let state: GameState = serde_wasm_bindgen::from_value(board_state.clone())

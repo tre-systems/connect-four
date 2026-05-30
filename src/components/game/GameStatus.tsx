@@ -148,7 +148,6 @@ export default function GameStatus({
           </span>
         </motion.div>
 
-        {/* AI vs AI mode indicator */}
         {gameMode === 'ai-vs-ai' && gameState.gameStatus === 'playing' && (
           <motion.div
             className="text-xs text-gray-400 mt-1"

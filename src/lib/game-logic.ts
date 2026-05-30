@@ -1,26 +1,8 @@
 import { GameState, Player, Board, MoveRecord } from './schemas';
-import {
-  createEmptyBoard,
-  printBoard,
-  isDraw,
-  checkWin,
-  getValidMoves,
-  WinningLine,
-  checkDirection,
-} from './logic/board-logic';
+import { createEmptyBoard, printBoard, isDraw, checkWin } from './logic/board-logic';
 import { makeAIMove, otherPlayer } from './logic/ai-logic';
 
-export type { WinningLine };
-export {
-  createEmptyBoard,
-  printBoard,
-  getValidMoves,
-  isDraw,
-  checkWin,
-  checkDirection,
-  makeAIMove,
-  otherPlayer,
-};
+export { checkWin, isDraw, makeAIMove };
 
 const COLS = 7;
 
@@ -45,14 +27,12 @@ export function makeMove(gameState: GameState, column: number): GameState {
   if (gameState.gameStatus !== 'playing') return gameState;
   if (column < 0 || column >= COLS) return gameState;
 
-  // Find the lowest empty row in the column (bottom is index 5, top is index 0)
   const col = gameState.board[column];
   const row = col.lastIndexOf(null);
-  if (row === -1) return gameState; // Column full
+  if (row === -1) return gameState;
 
-  // Place the piece in the lowest empty row
   const newBoard: Board = gameState.board.map((c, i) =>
-    i === column ? [...c.slice(0, row), gameState.currentPlayer, ...c.slice(row + 1)] : [...c]
+    i === column ? [...c.slice(0, row), gameState.currentPlayer, ...c.slice(row + 1)] : [...c],
   );
 
   const newHistory: MoveRecord[] = [
@@ -60,7 +40,6 @@ export function makeMove(gameState: GameState, column: number): GameState {
     { player: gameState.currentPlayer, column, row },
   ];
 
-  // Check for win
   const winResult = checkWin(newBoard, column, row, gameState.currentPlayer);
   const winner = winResult ? gameState.currentPlayer : null;
   const isDrawn = !winner && isDraw(newBoard);
@@ -69,13 +48,12 @@ export function makeMove(gameState: GameState, column: number): GameState {
     board: newBoard,
     currentPlayer:
       winner || isDrawn ? gameState.currentPlayer : otherPlayer(gameState.currentPlayer),
-    gameStatus: winner ? 'finished' : isDrawn ? 'finished' : 'playing',
-    winner: winner,
+    gameStatus: winner || isDrawn ? 'finished' : 'playing',
+    winner,
     history: newHistory,
     winningLine: winResult,
   } as GameState;
 
-  // Log the move
   const playerName = gameState.currentPlayer === 'player1' ? 'Red' : 'Yellow';
   const moveInfo = `${playerName} placed in column ${column} (row ${row})`;
 

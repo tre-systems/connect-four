@@ -42,28 +42,22 @@ fi
 
 print_status "Building application..."
 
-
-
-# Build for Cloudflare
 print_status "Building for Cloudflare..."
 npm run build:cf
 
 print_success "Build completed successfully!"
 
-# Run database migrations
 print_status "Running database migrations..."
 wrangler d1 migrations apply connect-four-db --remote
 
 print_success "Database migrations completed!"
 
-# Deploy to Cloudflare
 print_status "Deploying to Cloudflare Workers..."
 wrangler deploy
 
 print_success "Deployment completed successfully!"
 print_success "Your app is live at: https://connect-4.tre.systems"
 
-# Optional: Check deployment status
 print_status "Checking deployment status..."
 wrangler tail --format pretty
 

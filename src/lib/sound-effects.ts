@@ -26,7 +26,7 @@ class SoundEffects {
     frequency: number,
     duration: number,
     type: OscillatorType = 'sine',
-    volume = 0.1
+    volume = 0.1,
   ) {
     if (!this.enabled) return;
 
@@ -54,7 +54,7 @@ class SoundEffects {
     frequencies: number[],
     duration: number,
     type: OscillatorType = 'sine',
-    volume = 0.05
+    volume = 0.05,
   ) {
     frequencies.forEach(freq => this.playTone(freq, duration, type, volume));
   }
@@ -84,7 +84,6 @@ class SoundEffects {
   }
 
   async winAnimation() {
-    // Dramatic win animation sound sequence
     const sequence = [
       { freq: 523.25, duration: 0.2, type: 'sine' as OscillatorType }, // C5
       { freq: 659.25, duration: 0.2, type: 'sine' as OscillatorType }, // E5
@@ -94,20 +93,18 @@ class SoundEffects {
       { freq: 1567.98, duration: 0.4, type: 'sine' as OscillatorType }, // G6
     ];
 
-    // Play the sequence with increasing volume for dramatic effect
     sequence.forEach((note, i) => {
       setTimeout(() => {
         this.playTone(note.freq, note.duration, note.type, 0.08 + i * 0.02);
       }, i * 150);
     });
 
-    // Add some sparkle sounds
     for (let i = 0; i < 8; i++) {
       setTimeout(
         () => {
           this.playTone(800 + Math.random() * 400, 0.1, 'triangle', 0.03);
         },
-        900 + i * 100
+        900 + i * 100,
       );
     }
   }

@@ -68,15 +68,12 @@ export class BackgroundEffects {
   }
 
   init() {
-    // Initialize shapes
     for (let i = 0; i < 30; i++) {
       this.shapes.push(this.createShape());
     }
-    // Create flowing lines
     for (let i = 0; i < 20; i++) {
       this.lines.push(this.createLine());
     }
-    // Add floating particles
     for (let i = 0; i < 40; i++) {
       this.particles.push(this.createParticle());
     }
@@ -113,7 +110,7 @@ export class BackgroundEffects {
       targetY: 0,
       targetSize: 0,
       targetOpacity: 0,
-    } as Shape;
+    };
   }
 
   createLine(): Line {
@@ -128,7 +125,7 @@ export class BackgroundEffects {
       width: Math.random() * 2 + 1,
       fadeOut: false,
       targetOpacity: 0,
-    } as Line;
+    };
   }
 
   createParticle(): Particle {
@@ -145,7 +142,7 @@ export class BackgroundEffects {
       },
       fadeOut: false,
       targetOpacity: 0,
-    } as Particle;
+    };
   }
 
   update() {
@@ -164,13 +161,11 @@ export class BackgroundEffects {
       shape.life -= 0.001;
       shape.pulse += shape.pulseSpeed;
 
-      // Wrap around screen
       if (shape.x < -shape.size) shape.x = this.width + shape.size;
       if (shape.x > this.width + shape.size) shape.x = -shape.size;
       if (shape.y < -shape.size) shape.y = this.height + shape.size;
       if (shape.y > this.height + shape.size) shape.y = -shape.size;
 
-      // Smooth fade out when life is low
       if (shape.life <= 0.1 && !shape.fadeOut) {
         shape.fadeOut = true;
         shape.targetOpacity = 0;
@@ -183,7 +178,6 @@ export class BackgroundEffects {
         if (shape.opacity <= 0) {
           this.shapes.splice(i, 1);
           const newShape = this.createShape();
-          // Smooth transition to new position
           newShape.x = shape.x;
           newShape.y = shape.y;
           newShape.opacity = 0;
@@ -194,7 +188,6 @@ export class BackgroundEffects {
           continue;
         }
       } else {
-        // Smooth fade in and size transition
         shape.opacity = Math.min(shape.opacity + 0.01, shape.targetOpacity || shape.opacity);
         shape.size = Math.min(shape.size * 1.01, shape.targetSize || shape.size);
       }
@@ -207,7 +200,6 @@ export class BackgroundEffects {
 
       line.life -= 0.002;
 
-      // Smooth fade out when life is low
       if (line.life <= 0.1 && !line.fadeOut) {
         line.fadeOut = true;
         line.targetOpacity = 0;
@@ -218,14 +210,12 @@ export class BackgroundEffects {
         if (line.opacity <= 0) {
           this.lines.splice(i, 1);
           const newLine = this.createLine();
-          // Smooth transition
           newLine.opacity = 0;
           newLine.targetOpacity = newLine.opacity;
           this.lines.push(newLine);
           continue;
         }
       } else {
-        // Smooth fade in
         line.opacity = Math.min(line.opacity + 0.01, line.targetOpacity || line.opacity);
       }
     }
@@ -239,13 +229,11 @@ export class BackgroundEffects {
       particle.y += particle.direction.y;
       particle.life -= 0.001;
 
-      // Wrap around screen
       if (particle.x < -particle.size) particle.x = this.width + particle.size;
       if (particle.x > this.width + particle.size) particle.x = -particle.size;
       if (particle.y < -particle.size) particle.y = this.height + particle.size;
       if (particle.y > this.height + particle.size) particle.y = -particle.size;
 
-      // Smooth fade out when life is low
       if (particle.life <= 0.1 && !particle.fadeOut) {
         particle.fadeOut = true;
         particle.targetOpacity = 0;
@@ -256,7 +244,6 @@ export class BackgroundEffects {
         if (particle.opacity <= 0) {
           this.particles.splice(i, 1);
           const newParticle = this.createParticle();
-          // Smooth transition to new position
           newParticle.x = particle.x;
           newParticle.y = particle.y;
           newParticle.opacity = 0;
@@ -265,17 +252,15 @@ export class BackgroundEffects {
           continue;
         }
       } else {
-        // Smooth fade in
         particle.opacity = Math.min(
           particle.opacity + 0.01,
-          particle.targetOpacity || particle.opacity
+          particle.targetOpacity || particle.opacity,
         );
       }
     }
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    // Clear with pure black background and very subtle fade
     ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
     ctx.fillRect(0, 0, this.width, this.height);
 
@@ -283,7 +268,6 @@ export class BackgroundEffects {
     this.drawLines(ctx);
     this.drawShapes(ctx);
 
-    // Add enhanced glow effect
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     ctx.fillStyle = 'rgba(99, 102, 241, 0.02)';
@@ -335,7 +319,6 @@ export class BackgroundEffects {
 
       switch (shape.type) {
         case 'circle':
-          // Create gradient for circles
           const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, currentSize / 2);
           gradient.addColorStop(0, shape.color);
           gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');

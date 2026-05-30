@@ -187,8 +187,6 @@ impl MCTS {
         value_fn: &dyn Fn(&GameState) -> f32,
         policy_fn: &dyn Fn(&GameState) -> Vec<f32>,
     ) -> f32 {
-        // Debug print for first few simulations
-        // println!("Simulating Node {}, Depth 0", node_idx);
         self.simulate_with_depth(node_idx, value_fn, policy_fn, 0)
     }
 
@@ -237,15 +235,13 @@ impl MCTS {
                 let parent_visits = self.nodes[node_idx].visits;
                 let children = self.nodes[node_idx].children.clone();
 
+                // total_value is stored relative to each node's own player, so standard UCB applies.
                 let best_child_idx = children
                     .iter()
                     .max_by(|&&a, &&b| {
-                        // UCB expects score to be "Value for Player at node_idx"
-                        // Our nodes store "total_value" relative to the player at that node.
-                        // So Standard UCB works.
                         let a_score = self.nodes[a].ucb_score(self.exploration_constant, parent_visits);
                         let b_score = self.nodes[b].ucb_score(self.exploration_constant, parent_visits);
-                        
+
                         a_score
                             .partial_cmp(&b_score)
                             .unwrap_or(std::cmp::Ordering::Equal)
@@ -253,13 +249,7 @@ impl MCTS {
                     .copied()
                     .unwrap_or(node_idx);
 
-                if best_child_idx == node_idx {
-                     // println!("WARNING: Failed to select best child at node {}", node_idx);
-                }
-
-                // Negamax Recursion
-                // We get value relative to Child's player. We want value relative to Current player.
-                // So we negate it.
+                // Negate: child value is relative to the child's player, we want the current player's.
                 -self.simulate_with_depth(best_child_idx, value_fn, policy_fn, depth + 1)
             }
         };
@@ -310,10 +300,6 @@ impl MCTS {
             node_idx // Fallback to current node
         }
     }
-
-
-
-    // fn backpropagate(...) - Removed in favor of recursive updates
 
     fn get_terminal_value(&self, state: &GameState) -> f32 {
         if let Some(winner) = state.get_winner() {
