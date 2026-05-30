@@ -23,6 +23,13 @@ class WASMAIService {
   private isLoaded = false;
   private loadPromise: Promise<void> | null = null;
 
+  private mlWorker: Worker | null = null;
+  private mlReqId = 0;
+  private mlPending = new Map<
+    number,
+    { resolve: (r: WasmMLResponse) => void; reject: (e: Error) => void }
+  >();
+
   async initialize(): Promise<void> {
     if (this.loadPromise) {
       return this.loadPromise;
@@ -112,18 +119,40 @@ class WASMAIService {
     }
   }
 
-  async getMLMove(gameState: GameState): Promise<WasmMLResponse> {
-    if (!this.isLoaded || !this.ai) {
-      throw new Error('WASM AI not loaded');
+  private getMLWorker(): Worker {
+    if (!this.mlWorker) {
+      this.mlWorker = new Worker(new URL('./ai.worker.ts', import.meta.url), { type: 'module' });
+      this.mlWorker.addEventListener('message', (event: MessageEvent) => {
+        const { id, response, error } = event.data as {
+          id: number;
+          response?: WasmMLResponse;
+          error?: string;
+        };
+        const pending = this.mlPending.get(id);
+        if (!pending) return;
+        this.mlPending.delete(id);
+        if (error) pending.reject(new Error(error));
+        else pending.resolve(response as WasmMLResponse);
+      });
+      this.mlWorker.addEventListener('error', (event: ErrorEvent) => {
+        const err = new Error(`ML worker error: ${event.message}`);
+        this.mlPending.forEach(pending => pending.reject(err));
+        this.mlPending.clear();
+      });
     }
+    return this.mlWorker;
+  }
 
-    try {
-      const wasmState = await this.convertGameStateToWASM(gameState);
-      return this.ai.get_ml_move(wasmState);
-    } catch (error) {
-      console.error('🔍 ML AI: Error details:', error);
-      throw new Error(`WASM ML AI failed: ${error}`);
-    }
+  // The ML MCTS search is slow (~seconds), so it runs in a Web Worker to keep the
+  // main thread responsive. The worker owns its own WASM instance + weights.
+  async getMLMove(gameState: GameState): Promise<WasmMLResponse> {
+    const wasmState = await this.convertGameStateToWASM(gameState);
+    const worker = this.getMLWorker();
+    const id = ++this.mlReqId;
+    return new Promise<WasmMLResponse>((resolve, reject) => {
+      this.mlPending.set(id, { resolve, reject });
+      worker.postMessage({ id, state: wasmState });
+    });
   }
 
   async evaluatePosition(gameState: GameState): Promise<number> {

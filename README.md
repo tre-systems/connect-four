@@ -39,7 +39,7 @@ Requires Node 20+, Rust + Cargo, and [`wasm-pack`](https://github.com/rustwasm/w
 ## Architecture
 
 - **Frontend** — Next.js 15 / React 19; state in Zustand + Immer.
-- **AI engine** — Rust compiled to WebAssembly (`worker/`), instantiated and run on the main thread in the browser.
+- **AI engine** — Rust compiled to WebAssembly (`worker/`). The fast classic engine runs on the main thread; the slow ML-MCTS runs in a Web Worker (`src/lib/ai.worker.ts`) so the UI never freezes.
 - **Persistence** — current game state in `localStorage`. No server or database.
 - **Hosting** — a static site (Next.js `output: 'export'`) served by Cloudflare Workers Static Assets. No server code, no cold starts.
 

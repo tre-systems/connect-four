@@ -47,7 +47,7 @@ This implementation stands out for several reasons:
 - **Classic AI**: Rust, minimax with alpha-beta pruning, compiled to WebAssembly
 - **ML AI**: Rust, neural network, compiled to WebAssembly
 - **Performance**: All AI runs locally in the browser (no server calls)
-- **Architecture**: Pure client-side execution. The WASM module is loaded and called on the main thread (there is no dedicated Web Worker today — the ML-MCTS search blocks for ~2–4s, which is why the store wraps AI moves in `setTimeout` to keep the UI painting). Offloading the engine to a Web Worker is a future option.
+- **Architecture**: Pure client-side execution. The fast classic/heuristic engines run on the main thread (~milliseconds); the slow ML-MCTS search (~2–4s) runs in a **Web Worker** (`src/lib/ai.worker.ts`) so it never freezes the UI. The worker owns its own WASM instance + ML weights; the main thread keeps a separate instance for the classic engine.
 
 ### WASM Architecture Evolution
 
@@ -61,7 +61,7 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 
 **Current Design (Production)**:
 
-- All AI computation runs client-side in WebAssembly (on the main thread)
+- All AI computation runs client-side in WebAssembly (classic on the main thread, ML in a Web Worker)
 - Eliminates network latency and server infrastructure costs
 - Enables true offline play without server dependencies
 - Simplified deployment and reduced attack surface
