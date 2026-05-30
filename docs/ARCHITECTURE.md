@@ -120,19 +120,21 @@ stateDiagram-v2
 
 **Followed well:** schema-first types, functional core, facade + ACL, generated bindings, strategy dispatch, the fallback ladder, and logic-extracted-from-UI are applied cleanly and consistently.
 
-**Deviations to fix** (tracked in [BACKLOG.md](BACKLOG.md#pattern-consistency)):
+**Recently consolidated:**
 
-1. **Fragmented "AI / mode" vocabulary** — the single-source-of-truth pattern is broken here. `AITypeSchema` is `['classic','ml']`, but `ui-store` hard-codes `'heuristic' | 'classic' | 'ml' | 'watch'` (mode) and `'heuristic' | 'client' | 'ml'` (source), and the DB `gameType` enum is `['classic','ml','watch','heuristic']`. Three overlapping vocabularies, none derived from the Zod schema — and the heuristic engine (exposed by the facade as `getHeuristicMove`) isn't a first-class `AIType`.
-2. **Half-applied Command/Reducer** — `GameActionSchema` (`MAKE_MOVE` / `RESET_GAME`) is defined and exported but nothing consumes it; the store uses imperative methods. Either make it real (a `dispatch(action)` reducer) or delete the dead schema.
-3. **Selector returns a fresh object** — `useUIState` builds a new object literal each call; with Zustand v5 that risks extra re-renders. `game-store` uses fine-grained selectors. Wrap with `useShallow`.
-4. **`any` at the AI boundary** — `ai-logic` maps `mlResponse.diagnostics` with `(e: any)` despite `bindings.ts` providing `MLMoveEvaluation` / `MoveEvaluationWasm`. Type them (`AGENTS.md`: "always improve the type checking").
-5. **Duplicated fallback block** — the classic→random fallback is repeated twice inside `ai-logic.makeAIMove` (post-invalid and in `catch`). Fold it into one helper.
+- **AI / mode vocabulary unified.** `ui-store` no longer carries the dead `selectedMode` / `aiSourceP1` / `aiSourceP2` state — those turned out to be orphaned (nothing read them). The single source of truth is `AIType` (`classic` / `ml`) + `GameMode`, and `GameStatus` / `GameBoard` / `GameCompletionOverlay` now import `GameMode` instead of re-declaring the union inline.
+- **Dead `GameActionSchema` removed** — it was a half-applied reducer nothing consumed.
+- **WASM AI boundary fully typed** — `ai-logic` uses the generated `MLMoveEvaluation` / `MoveEvaluationWasm` types instead of `any`, and the duplicated classic→random fallback is folded into one `fallbackMove` helper.
+
+**Remaining** (for the deep clean — tracked in [BACKLOG.md](BACKLOG.md#pattern-consistency)):
+
+- The DB `gameType` enum still lists `watch` / `heuristic`; align it once the [database decision](BACKLOG.md) is made (the layer is unwired today).
+- `GameMode` includes an unused `human-vs-human`; `ui-store` still has unused UI-panel toggles (`showModelOverlay`, `diagnosticsPanelOpen`, `howToPlayOpen`) and a `useUIState` selector with no consumers.
+- The `heuristic` engine exists in Rust / the facade (`getHeuristicMove`) but isn't a first-class `AIType`.
 
 ### Patterns worth adopting (not yet present)
 
-- **One enum for the AI/mode domain** — fixes deviation #1: a single `AIType` (`classic` / `ml` / `heuristic`) plus the existing `GameMode`, with `ui-store` and the DB schema deriving from them.
-- **Typed boundary errors** — replace stringly-typed `throw new Error(\`…${error}\`)`at the WASM edge with a small discriminated`WasmAiError` (`not-loaded`/`invalid-move`/`engine-threw`). Keeps error handling elegant without a logging framework (`AGENTS.md` respected).
-- **`Result<column, reason>` for the fallback ladder** — model the move decision as a value folded through the fallback steps instead of nested `try/catch`; collapses deviation #5.
+- **Typed boundary errors** — replace the stringly-typed throw at the WASM edge with a small discriminated `WasmAiError` (`not-loaded` / `invalid-move` / `engine-threw`). Keeps error handling elegant without a logging framework (`AGENTS.md` respected). The `fallbackMove` helper returning `number | null` is a lightweight first step toward a `Result<column, reason>`.
 - **Repository pattern for persistence** — _if_ the D1 layer is wired (see [BACKLOG.md](BACKLOG.md)), put `saveGame` / `listStats` behind a small interface so components never touch Drizzle directly.
 - **React error boundary** around the board — to catch render-time WASM/AI failures, complementing the store-level `try/catch` that already routes errors to the `ui-store` modal.
 

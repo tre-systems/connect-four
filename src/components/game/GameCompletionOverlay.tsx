@@ -3,13 +3,13 @@
 import { motion } from 'framer-motion';
 import { Trophy, Zap, Brain, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GameState } from '@/lib/types';
+import { GameState, GameMode } from '@/lib/types';
 import { useGameStore } from '@/lib/game-store';
 
 interface GameCompletionOverlayProps {
   gameState: GameState;
   onResetGame: () => void;
-  gameMode?: 'human-vs-human' | 'human-vs-ai' | 'ai-vs-ai';
+  gameMode?: GameMode;
 }
 
 export default function GameCompletionOverlay({
@@ -123,7 +123,7 @@ export default function GameCompletionOverlay({
                             : 'text-yellow-400'
                           : isPlayer1Winner
                             ? 'text-green-400'
-                            : 'text-pink-400'
+                            : 'text-pink-400',
                       )}
                     />
                   );
@@ -143,7 +143,7 @@ export default function GameCompletionOverlay({
                     : 'text-yellow-400'
                   : isPlayer1Winner
                     ? 'text-green-400'
-                    : 'text-pink-400'
+                    : 'text-pink-400',
             )}
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

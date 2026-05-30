@@ -42,5 +42,13 @@ export default tseslint.config(
       'no-case-declarations': 'off',
       'no-useless-catch': 'off',
     },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
   }
 );

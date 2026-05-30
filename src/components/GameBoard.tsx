@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { GameState } from '@/lib/types';
+import { GameState, GameMode } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/lib/game-store';
 
@@ -23,7 +23,7 @@ interface GameBoardProps {
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
   watchMode?: boolean;
-  gameMode?: 'human-vs-human' | 'human-vs-ai' | 'ai-vs-ai';
+  gameMode?: GameMode;
 }
 
 export default function GameBoard({
@@ -57,7 +57,7 @@ export default function GameBoard({
   const winningSet = new Set(
     Array.isArray(gameState.winningLine?.positions)
       ? gameState.winningLine.positions.map(pos => `${pos.column},${pos.row}`)
-      : []
+      : [],
   );
 
   return (

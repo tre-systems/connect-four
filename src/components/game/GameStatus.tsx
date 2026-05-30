@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GameState } from '@/lib/types';
+import { GameState, GameMode } from '@/lib/types';
 import { Crown, Zap, Trophy, XCircle, Brain, Cpu } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 
 interface GameStatusProps {
   gameState: GameState;
   aiThinking: boolean;
-  gameMode?: 'human-vs-human' | 'human-vs-ai' | 'ai-vs-ai';
+  gameMode?: GameMode;
 }
 
 export default function GameStatus({

@@ -19,14 +19,17 @@ Known gaps, tech debt, and future work for Connect Four, ordered roughly by prio
 
 ## Pattern consistency
 
-Deviations from the documented [architecture patterns](ARCHITECTURE.md#architecture-patterns) — mostly small, mechanical fixes:
+Deviations from the documented [architecture patterns](ARCHITECTURE.md#architecture-patterns).
 
-- **Consolidate the AI/mode vocabulary.** `AITypeSchema` is `['classic','ml']`, but `ui-store` hard-codes `'heuristic'|'classic'|'ml'|'watch'` and `'heuristic'|'client'|'ml'`, and the DB `gameType` enum is `['classic','ml','watch','heuristic']`. Define one Zod enum (engine: `classic`/`ml`/`heuristic`) + reuse `GameMode`, and derive the rest. The heuristic engine already exists (`getHeuristicMove`) but isn't a first-class `AIType`.
-- **Resolve `GameActionSchema`.** Defined and exported but unused — either adopt a `dispatch(action)` reducer that consumes it, or delete it.
-- **`useShallow` for `useUIState`.** It returns a fresh object literal each render; wrap with `useShallow` (Zustand v5) to avoid needless re-renders.
-- **Type the AI boundary.** Replace `(e: any)` in `ai-logic.ts` with the generated `MLMoveEvaluation` / `MoveEvaluationWasm` types.
-- **DRY the fallback ladder.** The classic→random fallback is duplicated inside `ai-logic.makeAIMove`; fold it into one helper (a `Result<column, reason>` makes this clean).
-- **Typed boundary errors.** Swap stringly-typed `throw new Error(\`…${error}\`)`at the WASM edge for a small discriminated`WasmAiError`.
+**Done:** removed the dead `selectedMode` / `aiSourceP1` / `aiSourceP2` vocabulary from `ui-store`; components import `GameMode` instead of inline unions; removed the unused `GameActionSchema`; typed the `ai-logic` WASM boundary and de-duplicated its fallback ladder into a `fallbackMove` helper.
+
+**Remaining (deep clean):**
+
+- **DB `gameType` enum** still lists `watch` / `heuristic` — align it with the domain once the [DB wire-up-or-remove decision](#decisions-needed) is made.
+- **Unused UI state in `ui-store`** — `showModelOverlay`, `diagnosticsPanelOpen`, `howToPlayOpen`, and the `useUIState` selector have no consumers; remove or wire them.
+- **`GameMode` has an unused `human-vs-human`** member.
+- **`heuristic` engine isn't a first-class `AIType`** — it exists in Rust + the facade (`getHeuristicMove`) but the UI only selects `classic` / `ml`. Decide whether to surface it or drop the path.
+- **Typed boundary errors** — replace stringly-typed throws at the WASM edge with a discriminated `WasmAiError`, building on the `number | null` that `fallbackMove` already returns toward a `Result<column, reason>`.
 
 ## Nice to have
 

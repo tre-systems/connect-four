@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GameStateSchema, MoveRecordSchema, GameActionSchema } from '../schemas';
+import { GameStateSchema, MoveRecordSchema } from '../schemas';
 
 describe('Schemas', () => {
   describe('GameStateSchema', () => {
@@ -70,25 +70,6 @@ describe('Schemas', () => {
       };
 
       expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
-    });
-  });
-
-  describe('GameActionSchema', () => {
-    it('should validate reset game action', () => {
-      const resetAction = {
-        type: 'RESET_GAME' as const,
-      };
-
-      expect(() => GameActionSchema.parse(resetAction)).not.toThrow();
-    });
-
-    it('should validate make move action', () => {
-      const moveAction = {
-        type: 'MAKE_MOVE' as const,
-        column: 3,
-      };
-
-      expect(() => GameActionSchema.parse(moveAction)).not.toThrow();
     });
   });
 });
