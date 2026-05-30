@@ -21,6 +21,8 @@ Welcome to the Connect Four project documentation. This guide provides comprehen
 
 ### Reference Documentation
 
+> Architecture diagrams (Graphviz sources + rendered PNGs, plus inline Mermaid) live in [`diagrams/`](./diagrams/) and are embedded in [ARCHITECTURE.md](./ARCHITECTURE.md#diagrams).
+
 | Document                                 | Purpose                                  | Audience    |
 | ---------------------------------------- | ---------------------------------------- | ----------- |
 | **[ARCHITECTURE.md](./ARCHITECTURE.md)** | System design, data flow, infrastructure | Architects  |

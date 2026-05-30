@@ -2,6 +2,18 @@
 
 This document details the architecture of the Connect Four project, focusing on its AI engine, frontend, deployment, and infrastructure.
 
+## Diagrams
+
+Two rendered views live in [`docs/diagrams/`](diagrams/) (Graphviz sources + committed PNGs — run `npm run diagrams` to regenerate). Graphviz is used for the dense views; smaller diagrams are inline Mermaid further down.
+
+- **System overview** — the whole client / build / Cloudflare / WASM-engine shape:
+
+  ![System overview](diagrams/system-overview.png)
+
+- **AI move — strategy dispatch & fallback** — how a move is chosen and how the fallback ladder degrades:
+
+  ![AI move flow](diagrams/ai-move-flow.png)
+
 ## What Makes This Special?
 
 This implementation stands out for several reasons:
@@ -36,7 +48,7 @@ This implementation stands out for several reasons:
 - **Classic AI**: Rust, minimax with alpha-beta pruning, compiled to WebAssembly
 - **ML AI**: Rust, neural network, compiled to WebAssembly
 - **Performance**: All AI runs locally in the browser (no server calls)
-- **Architecture**: Pure client-side execution via Web Workers
+- **Architecture**: Pure client-side execution. The WASM module is loaded and called on the main thread (there is no dedicated Web Worker today — the ML-MCTS search blocks for ~2–4s, which is why the store wraps AI moves in `setTimeout` to keep the UI painting). Offloading the engine to a Web Worker is a future option.
 
 ### WASM Architecture Evolution
 
@@ -50,10 +62,79 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 
 **Current Design (Production)**:
 
-- All AI computation runs client-side via WebAssembly workers
+- All AI computation runs client-side in WebAssembly (on the main thread)
 - Eliminates network latency and server infrastructure costs
 - Enables true offline play without server dependencies
 - Simplified deployment and reduced attack surface
+
+## Architecture Patterns
+
+The codebase is deliberately built from a small set of named patterns. Learning these is the fastest way to understand — or safely extend — the project.
+
+### Layering & dependency direction
+
+```mermaid
+flowchart TD
+    UI["React components<br/>thin · data-testid"] --> ST["game-store / ui-store<br/>Zustand"]
+    ST --> CORE["Pure core<br/>game-logic + logic/*"]
+    ST --> FAC["WASM AI facade<br/>singleton · ACL"]
+    FAC --> ENG["Rust AI engine<br/>(WASM)"]
+    CORE --> SCH["schemas.ts<br/>Zod domain types"]
+    FAC --> BIND["bindings.ts<br/>ts-rs generated"]
+```
+
+Dependencies point downward: UI depends on the stores, the stores depend on the pure core and the AI facade, and everything types against the Zod schemas. Nothing in the core or logic layers imports React.
+
+### The patterns
+
+| Pattern                                | Where                                                                                                                | Why                                                                        |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Schema-first domain model**          | `schemas.ts` (Zod) → `types.ts` re-exports; `z.infer` for every type                                                 | One source of truth; runtime validation and compile-time types never drift |
+| **Functional core, imperative shell**  | Pure `game-logic.ts` + `logic/*` return a new `GameState`; `game-store` is the shell                                 | Core is unit-testable in isolation; no hidden state                        |
+| **Immutable updates**                  | Immer middleware in `game-store`; spreads in the pure core                                                           | No accidental mutation; safe with React/Zustand                            |
+| **Store-per-concern + selector hooks** | `game-store` (persisted gameplay) vs `ui-store` (ephemeral UI); each exposes nested `actions` + `useX` hooks         | Narrow subscriptions; clear ownership                                      |
+| **Versioned persistence**              | `persist` + `version` + `migrate` + `partialize(gameState)`                                                          | localStorage survives schema changes without crashing                      |
+| **Facade + lazy singleton**            | `WASMAIService` wraps the raw module; `getWASMAIService()`; idempotent async `initialize()`                          | One owner of the WASM lifecycle; callers get a clean async API             |
+| **Anti-corruption layer (FFI)**        | `convertGameStateToWASM` maps camelCase/`null` ↔ snake_case/`'empty'`/`genetic_params`                               | The TS and Rust type worlds stay decoupled                                 |
+| **Generated contract types**           | `bindings.ts` produced by **ts-rs**; `export_bindings_*` Rust tests enforce it                                       | Rust owns the wire shape; TS cannot silently drift                         |
+| **Strategy**                           | `makeAIMove(state, aiType)` dispatches `classic`/`ml` to interchangeable engines behind a "return a column" contract | Add or swap AIs without touching callers                                   |
+| **Graceful degradation**               | Fallback ladder: primary → classic depth-3 → random valid → throw → error modal                                      | The UI never deadlocks on an AI failure                                    |
+| **Logic-extracted-from-UI**            | Thin `'use client'` components with `data-testid`; logic in `lib/`                                                   | Unit tests hit `lib`; Playwright hits testids (per `AGENTS.md`)            |
+| **Module-per-concern (engine)**        | Rust `solver` / `mcts` / `neural_network` / `features` / `genetic_params` / `ml_ai`; `wasm_api.rs` is the boundary   | Each engine is separately testable                                         |
+| **Offline-first PWA**                  | Generated service worker, `/offline` route, COEP/COOP headers for WASM                                               | Full play with no network                                                  |
+
+### Game state machine
+
+The `gameStatus` field drives a small, explicit state machine:
+
+```mermaid
+stateDiagram-v2
+    [*] --> not_started
+    not_started --> playing: startGame()
+    playing --> playing: makeMove() / makeAIMove()
+    playing --> finished: win or draw
+    finished --> playing: startGame() / reset()
+```
+
+### Consistency audit — where we follow the patterns, and where we don't
+
+**Followed well:** schema-first types, functional core, facade + ACL, generated bindings, strategy dispatch, the fallback ladder, and logic-extracted-from-UI are applied cleanly and consistently.
+
+**Deviations to fix** (tracked in [BACKLOG.md](BACKLOG.md#pattern-consistency)):
+
+1. **Fragmented "AI / mode" vocabulary** — the single-source-of-truth pattern is broken here. `AITypeSchema` is `['classic','ml']`, but `ui-store` hard-codes `'heuristic' | 'classic' | 'ml' | 'watch'` (mode) and `'heuristic' | 'client' | 'ml'` (source), and the DB `gameType` enum is `['classic','ml','watch','heuristic']`. Three overlapping vocabularies, none derived from the Zod schema — and the heuristic engine (exposed by the facade as `getHeuristicMove`) isn't a first-class `AIType`.
+2. **Half-applied Command/Reducer** — `GameActionSchema` (`MAKE_MOVE` / `RESET_GAME`) is defined and exported but nothing consumes it; the store uses imperative methods. Either make it real (a `dispatch(action)` reducer) or delete the dead schema.
+3. **Selector returns a fresh object** — `useUIState` builds a new object literal each call; with Zustand v5 that risks extra re-renders. `game-store` uses fine-grained selectors. Wrap with `useShallow`.
+4. **`any` at the AI boundary** — `ai-logic` maps `mlResponse.diagnostics` with `(e: any)` despite `bindings.ts` providing `MLMoveEvaluation` / `MoveEvaluationWasm`. Type them (`AGENTS.md`: "always improve the type checking").
+5. **Duplicated fallback block** — the classic→random fallback is repeated twice inside `ai-logic.makeAIMove` (post-invalid and in `catch`). Fold it into one helper.
+
+### Patterns worth adopting (not yet present)
+
+- **One enum for the AI/mode domain** — fixes deviation #1: a single `AIType` (`classic` / `ml` / `heuristic`) plus the existing `GameMode`, with `ui-store` and the DB schema deriving from them.
+- **Typed boundary errors** — replace stringly-typed `throw new Error(\`…${error}\`)`at the WASM edge with a small discriminated`WasmAiError` (`not-loaded`/`invalid-move`/`engine-threw`). Keeps error handling elegant without a logging framework (`AGENTS.md` respected).
+- **`Result<column, reason>` for the fallback ladder** — model the move decision as a value folded through the fallback steps instead of nested `try/catch`; collapses deviation #5.
+- **Repository pattern for persistence** — _if_ the D1 layer is wired (see [BACKLOG.md](BACKLOG.md)), put `saveGame` / `listStats` behind a small interface so components never touch Drizzle directly.
+- **React error boundary** around the board — to catch render-time WASM/AI failures, complementing the store-level `try/catch` that already routes errors to the `ui-store` modal.
 
 ## Data Flow
 

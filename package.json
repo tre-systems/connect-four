@@ -46,6 +46,8 @@
     "logs": "wrangler tail --format pretty",
     "prepare": "husky",
     "generate:types": "./scripts/generate-types.sh",
+    "diagrams": "node scripts/render-diagrams.mjs",
+    "check:diagrams": "node scripts/check-diagrams.mjs",
     "test:wasm-loading": "node scripts/test-wasm-loading.js",
     "utils:convert-model": "python3 scripts/convert_model_for_wasm.py",
     "train": "cd worker && cargo run --release --bin train --features binary"

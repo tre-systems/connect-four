@@ -1,0 +1,81 @@
+digraph AiMoveFlow {
+  graph [
+    rankdir=TB,
+    bgcolor="#ffffff",
+    pad="0.55",
+    nodesep="0.5",
+    ranksep="0.7",
+    splines=polyline,
+    outputorder=edgesfirst,
+    compound=true,
+    newrank=true,
+    forcelabels=true,
+    fontname="Avenir",
+    label=<
+      <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">
+        <TR><TD><FONT POINT-SIZE="34"><B>AI Move &mdash; Strategy Dispatch &amp; Fallback</B></FONT></TD></TR>
+      </TABLE>
+    >,
+    labelloc=t,
+    labeljust=c
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    margin="0.21,0.13",
+    width=3.1,
+    height=0.74,
+    fixedsize=false,
+    fontname="Avenir",
+    fontsize=18,
+    penwidth=2.4,
+    fontcolor="#14213d",
+    color="#2264c7",
+    fillcolor="#eaf3ff:#ffffff",
+    gradientangle=270
+  ];
+
+  edge [
+    color="#263a59",
+    fontname="Avenir",
+    fontsize=13,
+    fontcolor="#3d4a5c",
+    penwidth=2.2,
+    arrowsize=0.78
+  ];
+
+  A [label=<<B>game-store.makeAIMove()</B><BR/><FONT POINT-SIZE="15">AI turn detected &middot; sets aiThinking</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+  B [label=<<B>ai-logic.makeAIMove(state, aiType)</B><BR/><FONT POINT-SIZE="15">strategy dispatcher</FONT>>, fillcolor="#f5f3ff:#ffffff", color="#7c3aed"];
+
+  D1 [label=<<B>aiType?</B>>, shape=diamond, style=filled, width=2.7, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];
+
+  C1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">getBestMove(depth 6)</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+  C2 [label=<<B>ML-MCTS</B><BR/><FONT POINT-SIZE="15">getMLMove()</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+
+  D2 [label=<<B>valid move 0&ndash;6?</B>>, shape=diamond, style=filled, width=3.0, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];
+
+  F1 [label=<<B>Fallback: classic</B><BR/><FONT POINT-SIZE="15">getBestMove(depth 3)</FONT>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+  D3 [label=<<B>valid?</B>>, shape=diamond, style=filled, width=2.5, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];
+  F2 [label=<<B>Fallback: random</B><BR/><FONT POINT-SIZE="15">pick a valid column</FONT>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+  D4 [label=<<B>any valid moves?</B>>, shape=diamond, style=filled, width=3.0, height=1.05, fillcolor="#ffffff", color="#1f2f46", penwidth=2.4];
+
+  OK [label=<<B>Return column</B><BR/><FONT POINT-SIZE="15">store animates &rarr; makeMove</FONT>>, fillcolor="#d8f5de:#effcf2", color="#15803d", penwidth=3.0];
+  ERR [label=<<B>Throw &rarr; showError</B><BR/><FONT POINT-SIZE="15">ui-store error modal &middot; prompt refresh</FONT>>, fillcolor="#fde2e1:#fff5f5", color="#c53030", penwidth=3.0];
+
+  A -> B [label="delegate"];
+  B -> D1;
+  D1 -> C1 [label="classic"];
+  D1 -> C2 [label="ml"];
+  C1 -> D2;
+  C2 -> D2;
+  D2 -> OK [label="Yes"];
+  D2 -> F1 [label="No / invalid"];
+  B -> F1 [label="on any WASM exception", style=dashed, color="#6b7280", fontcolor="#6b7280", constraint=false];
+  F1 -> D3;
+  D3 -> OK [label="Yes"];
+  D3 -> F2 [label="No"];
+  F2 -> D4;
+  D4 -> OK [label="move exists"];
+  D4 -> ERR [label="none"];
+}

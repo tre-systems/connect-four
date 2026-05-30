@@ -1,0 +1,174 @@
+digraph SystemOverview {
+  graph [
+    rankdir=TB,
+    bgcolor="#ffffff",
+    pad="0.55",
+    nodesep="0.55",
+    ranksep="0.85",
+    splines=polyline,
+    outputorder=edgesfirst,
+    compound=true,
+    newrank=true,
+    forcelabels=true,
+    fontname="Avenir",
+    label=<
+      <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">
+        <TR><TD><FONT POINT-SIZE="34"><B>Connect Four &mdash; System Overview</B></FONT></TD></TR>
+      </TABLE>
+    >,
+    labelloc=t,
+    labeljust=c
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    margin="0.21,0.13",
+    width=3.05,
+    height=0.74,
+    fixedsize=false,
+    fontname="Avenir",
+    fontsize=18,
+    penwidth=2.4,
+    fontcolor="#14213d",
+    color="#2264c7",
+    fillcolor="#eaf3ff:#ffffff",
+    gradientangle=270
+  ];
+
+  edge [
+    color="#263a59",
+    fontname="Avenir",
+    fontsize=13,
+    fontcolor="#3d4a5c",
+    penwidth=2.2,
+    arrowsize=0.78
+  ];
+
+  // ---- Build / codegen ----
+  subgraph cluster_build {
+    graph [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#8a5f00"><B>BUILD / CODEGEN</B></FONT></TD></TR>
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#836b27">Runs in CI and locally; outputs are static assets and generated types.</FONT></TD></TR>
+        </TABLE>
+      >,
+      labelloc=t,
+      labeljust=l,
+      color="#f2cf78",
+      fillcolor="#fffaf0",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    B1 [label=<<B>wasm-pack</B><BR/><FONT POINT-SIZE="15">Rust &rarr; /public/wasm/*</FONT>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    B2 [label=<<B>ts-rs</B><BR/><FONT POINT-SIZE="15">Rust types &rarr; src/lib/bindings.ts</FONT>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    B3 [label=<<B>Model assets</B><BR/><FONT POINT-SIZE="15">evolved.json &middot; ML weights &rarr; /public/ml</FONT>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+
+    B1 -> B2 [style=invis];
+    B2 -> B3 [style=invis];
+  }
+
+  // ---- Cloudflare (deploy) ----
+  subgraph cluster_cf {
+    graph [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#0f766e"><B>CLOUDFLARE (DEPLOY)</B></FONT></TD></TR>
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#357a74">OpenNext builds the Next.js app into a single Worker.</FONT></TD></TR>
+        </TABLE>
+      >,
+      labelloc=t,
+      labeljust=l,
+      color="#99d5cf",
+      fillcolor="#f0fdfa",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    C1 [label=<<B>OpenNext Worker</B><BR/><FONT POINT-SIZE="15">serves SPA + static assets</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    C2 [label=<<B>Workers Static Assets</B><BR/><FONT POINT-SIZE="15">JS &middot; WASM &middot; model JSON</FONT>>, fillcolor="#e6fffb:#ffffff", color="#0f766e"];
+    C3 [label=<<B>D1 database</B><BR/><FONT POINT-SIZE="15">games table &mdash; scaffolded, not wired</FONT>>, fillcolor="#e6fffb:#ffffff", color="#0f766e", style="rounded,filled,dashed"];
+
+    C1 -> C2 [style=invis];
+    C2 -> C3 [style=invis];
+  }
+
+  // ---- Browser (client-only) ----
+  subgraph cluster_browser {
+    graph [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1f5fbf"><B>BROWSER (CLIENT-ONLY)</B></FONT></TD></TR>
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#496f9f">React 19 SPA. All gameplay and AI run locally &mdash; no server round-trip.</FONT></TD></TR>
+        </TABLE>
+      >,
+      labelloc=t,
+      labeljust=l,
+      color="#b9d8ff",
+      fillcolor="#f5faff",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    R1 [label=<<B>React UI</B><BR/><FONT POINT-SIZE="15">components &middot; data-testid &middot; framer-motion</FONT>>, fillcolor="#edf7ff:#ffffff", color="#2f80ed"];
+    R2 [label=<<B>game-store</B><BR/><FONT POINT-SIZE="15">Zustand + Immer &middot; persisted</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    R3 [label=<<B>ui-store</B><BR/><FONT POINT-SIZE="15">Zustand &middot; ephemeral UI state</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    R4 [label=<<B>Pure core</B><BR/><FONT POINT-SIZE="15">game-logic + logic/* &middot; rules, win check</FONT>>, fillcolor="#f5f3ff:#ffffff", color="#7c3aed"];
+    R5 [label=<<B>WASM AI facade</B><BR/><FONT POINT-SIZE="15">WASMAIService singleton &middot; ACL</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    R6 [label=<<B>localStorage</B><BR/><FONT POINT-SIZE="15">current game state</FONT>>, fillcolor="#e6fffb:#ffffff", color="#0f766e"];
+
+    R1 -> R2 [style=invis];
+    R2 -> R4 [style=invis];
+    R3 -> R5 [style=invis];
+    R4 -> R6 [style=invis];
+  }
+
+  // ---- WASM AI engine ----
+  subgraph cluster_wasm {
+    graph [
+      label=<
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1e6b43"><B>WASM AI ENGINE (RUST)</B></FONT></TD></TR>
+          <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#4e7a61">Compiled to WebAssembly; instantiated and run inside the browser.</FONT></TD></TR>
+        </TABLE>
+      >,
+      labelloc=t,
+      labeljust=l,
+      color="#b8e5c8",
+      fillcolor="#f4fbf6",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    G1 [label=<<B>Bitboard solver</B><BR/><FONT POINT-SIZE="15">Negamax + &alpha;-&beta; &middot; depth 6</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    G2 [label=<<B>ML-MCTS</B><BR/><FONT POINT-SIZE="15">AlphaZero-style &middot; 4000 sims</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    G3 [label=<<B>Neural network</B><BR/><FONT POINT-SIZE="15">4&times;128 value + policy</FONT>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+
+    G1 -> G2 [style=invis];
+    G2 -> G3 [style=invis];
+  }
+
+  // ---- Cross-cluster edges ----
+  B1 -> C2 [label="bundled into assets"];
+  B3 -> C2 [label="bundled into assets"];
+  B2 -> R5 [label="generates bindings.ts", style=dashed, color="#6b7280", fontcolor="#6b7280", constraint=false];
+  B1 -> G1 [label="compiles to WASM", style=dashed, color="#6b7280", fontcolor="#6b7280", constraint=false];
+
+  C1 -> R1 [label="serves SPA", lhead=cluster_browser];
+  C2 -> R5 [label="fetch /wasm + /ml", constraint=false];
+
+  R1 -> R2 [label="dispatch actions", constraint=false];
+  R1 -> R3 [label="toggle panels / errors", constraint=false];
+  R2 -> R4 [label="makeMove (pure)", constraint=false];
+  R2 -> R6 [label="persist", constraint=false];
+  R2 -> R5 [label="makeAIMove"];
+  R5 -> G1 [label="get_best_move", lhead=cluster_wasm];
+  R5 -> G2 [label="get_ml_move"];
+  G2 -> G3 [label="value / policy", constraint=false];
+}
