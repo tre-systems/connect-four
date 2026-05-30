@@ -1,8 +1,8 @@
-import { GameState, Player, AIType } from '../schemas';
+import { GameState, Player, AIType, Board } from '../schemas';
 import { MLMoveEvaluation, MoveEvaluationWasm } from '../bindings';
 import { CLASSIC_AI_DEPTH } from '../constants';
 import { getWASMAIService } from '../wasm-ai-service';
-import { getValidMoves, printBoard } from './board-logic';
+import { getValidMoves, printBoard, checkWin } from './board-logic';
 
 export function otherPlayer(player: Player): Player {
   return player === 'player1' ? 'player2' : 'player1';
@@ -10,6 +10,31 @@ export function otherPlayer(player: Player): Player {
 
 function isValidColumn(move: number | null | undefined): move is number {
   return move !== null && move !== undefined && move >= 0 && move < 7;
+}
+
+function wouldWin(board: Board, col: number, player: Player): boolean {
+  const row = board[col].lastIndexOf(null);
+  if (row === -1) return false;
+  const newBoard = board.map((c, i) =>
+    i === col ? [...c.slice(0, row), player, ...c.slice(row + 1)] : c,
+  );
+  return checkWin(newBoard, col, row, player) !== null;
+}
+
+// Cheap 1-ply safety net for the ML AI: play an immediate win, otherwise block
+// an immediate opponent win. The MCTS search occasionally misses these.
+export function immediateTacticalMove(gameState: GameState): number | null {
+  const me = gameState.currentPlayer;
+  const opponent = otherPlayer(me);
+  const valid = getValidMoves(gameState.board);
+
+  for (const col of valid) {
+    if (wouldWin(gameState.board, col, me)) return col;
+  }
+  for (const col of valid) {
+    if (wouldWin(gameState.board, col, opponent)) return col;
+  }
+  return null;
 }
 
 // Shared degradation path: try the classic solver at a shallow depth, then a
@@ -60,6 +85,12 @@ export async function makeAIMove(
         response = await wasmAI.getBestMove(gameState, CLASSIC_AI_DEPTH);
         break;
       case 'ml': {
+        const tactical = immediateTacticalMove(gameState);
+        if (tactical !== null) {
+          console.log(`🛡️ ML AI: forced tactical move at column ${tactical}`);
+          return tactical;
+        }
+
         const mlResponse = await wasmAI.getMLMove(gameState);
         if (mlResponse.thinking) {
           console.log(`🧠 ML AI Thinking: ${mlResponse.thinking}`);
