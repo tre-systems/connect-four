@@ -168,10 +168,6 @@ impl MLAI {
         self.value_network.load_weights(value_weights);
         self.policy_network.load_weights(policy_weights);
     }
-
-    pub fn get_networks(&self) -> (&NeuralNetwork, &NeuralNetwork) {
-        (&self.value_network, &self.policy_network)
-    }
 }
 
 #[cfg(test)]

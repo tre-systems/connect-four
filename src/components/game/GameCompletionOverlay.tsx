@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Trophy, Zap, Brain, Cpu } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getAITypeLabel } from '@/lib/utils';
 import { GameState, GameMode } from '@/lib/types';
 import { useGameStore } from '@/lib/game-store';
 
@@ -20,17 +20,6 @@ export default function GameCompletionOverlay({
   const { player1AI, player2AI } = useGameStore();
   const isPlayer1Winner = gameState.winner === 'player1';
   const isDraw = gameState.gameStatus === 'finished' && !gameState.winner;
-
-  const getAITypeLabel = (aiType: string) => {
-    switch (aiType) {
-      case 'classic':
-        return 'Classic AI';
-      case 'ml':
-        return 'ML AI';
-      default:
-        return 'AI';
-    }
-  };
 
   const getTitle = () => {
     if (isDraw) return 'Draw!';

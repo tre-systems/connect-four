@@ -195,23 +195,6 @@ impl NeuralNetwork {
         self.get_weights()
     }
 
-    pub fn load_weights_from_file(
-        &mut self,
-        filename: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let content = std::fs::read_to_string(filename)?;
-        let weights: Vec<f32> = serde_json::from_str(&content)?;
-        self.load_weights(&weights);
-        Ok(())
-    }
-
-    pub fn save_weights_to_file(&self, filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let weights = self.get_weights();
-        let content = serde_json::to_string(&weights)?;
-        std::fs::write(filename, content)?;
-        Ok(())
-    }
-
     pub fn num_layers(&self) -> usize {
         self.layers.len()
     }

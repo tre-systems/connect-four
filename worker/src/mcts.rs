@@ -88,7 +88,7 @@ impl MCTS {
         for i in 0..self.num_simulations {
             self.simulate(root_idx, value_fn, policy_fn);
             
-            // Add Dirichlet Noise to root priors for the first simulation (AlphaZero style)
+            // Add exploration noise to root priors on the first simulation (AlphaZero-style)
             if i == 0 && add_noise {
                 self.add_root_noise(root_idx);
             }
@@ -162,7 +162,7 @@ impl MCTS {
 
         let children_indices: Vec<usize> = self.nodes[root_idx].children.clone();
         
-        // Simple Dirichlet-like noise (alpha=0.3 for Connect Four branching factor)
+        // Uniform random exploration noise on the root priors (a lightweight stand-in for Dirichlet noise)
         const EPSILON: f32 = 0.25;
         
         let mut rng = rand::thread_rng();

@@ -313,9 +313,9 @@ fn save_model(ml_ai: &MLAI, samples: usize, epochs: usize) {
             "phase": 3,
             "samples": samples,
             "epochs": epochs,
-            "architecture": [256, 128, 64],
+            "architecture": [128, 128, 128, 128],
             "teacher": "BitboardSolver",
-            "teacher_depth": 18,
+            "teacher_depth": 12,
             "curriculum": "40% early, 40% mid, 20% late game",
             "lr_schedule": "warmup + decay"
         },

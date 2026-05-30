@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, getAITypeLabel } from '@/lib/utils';
 import { GameState, GameMode } from '@/lib/types';
 import { Crown, Zap, Trophy, XCircle, Brain, Cpu } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
@@ -25,17 +25,6 @@ export default function GameStatus({
     // eslint-disable-next-line
     setIsMounted(true);
   }, []);
-
-  const getAITypeLabel = (aiType: string) => {
-    switch (aiType) {
-      case 'classic':
-        return 'Classic AI';
-      case 'ml':
-        return 'ML AI';
-      default:
-        return 'AI';
-    }
-  };
 
   const getStatusMessage = () => {
     if (gameState.gameStatus === 'not_started') {
