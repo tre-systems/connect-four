@@ -2,13 +2,12 @@ import { GameState } from './schemas';
 import type { WasmBestMoveResponse, WasmHeuristicResponse, WasmMLResponse } from './bindings';
 import { DEFAULT_GENETIC_PARAMS } from './constants';
 
+// The main-thread instance only drives the classic/heuristic engines. The ML
+// engine (get_ml_move / load_ml_weights) lives in the Web Worker — see ai.worker.ts.
 interface WASMAIInstance {
   get_best_move: (state: unknown, depth: number) => WasmBestMoveResponse;
   get_heuristic_move: (state: unknown) => WasmHeuristicResponse;
-  get_ml_move: (state: unknown) => WasmMLResponse;
   evaluate_position: (state: unknown) => number;
-  evaluate_position_ml: (state: unknown) => number;
-  load_ml_weights: (value_weights: unknown, policy_weights: unknown) => void;
   clear_transposition_table: () => void;
   get_transposition_table_size: () => number;
 }
@@ -168,19 +167,6 @@ class WASMAIService {
     }
   }
 
-  async loadMLWeights(valueWeights: number[], policyWeights: number[]): Promise<void> {
-    if (!this.isLoaded || !this.ai) {
-      throw new Error('WASM AI not loaded');
-    }
-
-    try {
-      this.ai.load_ml_weights(valueWeights, policyWeights);
-      console.log('✅ ML weights loaded successfully');
-    } catch (error) {
-      throw new Error(`Failed to load ML weights: ${error}`);
-    }
-  }
-
   get isReady(): boolean {
     return this.isLoaded;
   }
@@ -212,34 +198,12 @@ export function resetWASMAIService(): void {
   wasmAIInstance = null;
 }
 
+// Loads the WASM module on the main thread for the classic/heuristic engines (and
+// the classic fallback). The ML engine runs in a Web Worker that loads its own WASM
+// + weights on demand (see ai.worker.ts), so the main thread never fetches the ML
+// weights — they would otherwise be loaded into a network it never queries.
 export async function initializeWASMAI(): Promise<void> {
-  const service = getWASMAIService();
-  await service.initialize();
-
-  try {
-    console.log('🔍 Loading ML weights from /ml/data/weights/ml_ai_weights_best.json...');
-    const weightsResponse = await fetch('/ml/data/weights/ml_ai_weights_best.json');
-    console.log('🔍 Weights response status:', weightsResponse.status, weightsResponse.ok);
-
-    if (weightsResponse.ok) {
-      const model = (await weightsResponse.json()) as {
-        value_network?: { weights: number[] };
-        policy_network?: { weights: number[] };
-      };
-
-      if (model.value_network?.weights && model.policy_network?.weights) {
-        await service.loadMLWeights(model.value_network.weights, model.policy_network.weights);
-        console.log('✅ ML weights loaded successfully');
-      } else {
-        console.warn('Model format not recognized - missing weights arrays');
-        console.warn('⚠️ ML AI will use random weights');
-      }
-    } else {
-      console.warn('⚠️ Failed to fetch weights file - ML AI will use random weights');
-    }
-  } catch (error) {
-    console.error('Could not load ML weights:', error);
-  }
+  await getWASMAIService().initialize();
 }
 
 export default WASMAIService;
