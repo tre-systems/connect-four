@@ -42,3 +42,6 @@ local.db
 .venv/
 .wrangler/
 .vercel/
+
+# Design source art (large, not referenced by the build)
+design/
