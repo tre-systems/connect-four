@@ -1,26 +1,11 @@
 name = "connect-four-main"
-main = ".open-next/worker.js"
 compatibility_date = "2025-06-14"
-compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
+# Static site: the app is 100% client-side (the Rust/WASM AI runs in the
+# browser), so this is an assets-only Worker — no server code, no cold starts.
 [assets]
-directory = ".open-next/assets"
-binding = "ASSETS"
-
-[vars]
-ENVIRONMENT = "production"
-
-[observability]
-enabled = true
-head_sampling_rate = 1
+directory = "./out"
 
 [[routes]]
 pattern = "connect-4.tre.systems/*"
 zone_name = "tre.systems"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "connect-four-db"
-database_id = "15bf99a9-0f64-41a0-a895-361c1cf15757"
-preview_database_id = "connect-four-db-preview"
-migrations_dir = "migrations"

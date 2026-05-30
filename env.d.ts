@@ -1,10 +1,3 @@
-/// <reference types="@cloudflare/workers-types" />
-
-interface CloudflareEnv {
-  DB: D1Database;
-  ASSETS: Fetcher;
-}
-
 declare module '/wasm/connect_four_ai_core.js' {
   export class ConnectFourAI {
     free(): void;

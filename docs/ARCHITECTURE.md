@@ -41,7 +41,6 @@ This implementation stands out for several reasons:
 - **UI State**: `src/lib/ui-store.ts` (Zustand)
 - **Game Logic**: `src/lib/game-logic.ts` and `src/lib/logic/` (pure functions)
 - **AI Services**: `src/lib/wasm-ai-service.ts` (loads the WASM module; handles Classic and ML AI)
-- **Persistence layer**: `src/lib/db/` (Drizzle schema + D1/SQLite connector — see "Database System" below)
 
 ### AI Engine
 
@@ -126,16 +125,14 @@ stateDiagram-v2
 - **Dead `GameActionSchema` removed** — it was a half-applied reducer nothing consumed.
 - **WASM AI boundary fully typed** — `ai-logic` uses the generated `MLMoveEvaluation` / `MoveEvaluationWasm` types instead of `any`, and the duplicated classic→random fallback is folded into one `fallbackMove` helper.
 
-**Remaining** (for the deep clean — tracked in [BACKLOG.md](BACKLOG.md#pattern-consistency)):
+**Remaining** (tracked in [BACKLOG.md](BACKLOG.md#pattern-consistency)):
 
-- The DB `gameType` enum still lists `watch` / `heuristic`; align it once the [database decision](BACKLOG.md) is made (the layer is unwired today).
-- `GameMode` includes an unused `human-vs-human`; `ui-store` still has unused UI-panel toggles (`showModelOverlay`, `diagnosticsPanelOpen`, `howToPlayOpen`) and a `useUIState` selector with no consumers.
+- `GameMode` includes an unused `human-vs-human` member.
 - The `heuristic` engine exists in Rust / the facade (`getHeuristicMove`) but isn't a first-class `AIType`.
 
 ### Patterns worth adopting (not yet present)
 
 - **Typed boundary errors** — replace the stringly-typed throw at the WASM edge with a small discriminated `WasmAiError` (`not-loaded` / `invalid-move` / `engine-threw`). Keeps error handling elegant without a logging framework (`AGENTS.md` respected). The `fallbackMove` helper returning `number | null` is a lightweight first step toward a `Result<column, reason>`.
-- **Repository pattern for persistence** — _if_ the D1 layer is wired (see [BACKLOG.md](BACKLOG.md)), put `saveGame` / `listStats` behind a small interface so components never touch Drizzle directly.
 - **React error boundary** around the board — to catch render-time WASM/AI failures, complementing the store-level `try/catch` that already routes errors to the `ui-store` modal.
 
 ## Data Flow
@@ -155,60 +152,19 @@ stateDiagram-v2
 3. Completion overlay shows the result
 4. Current game state is persisted to `localStorage` (so a game in progress survives a refresh)
 
-> **Note:** The app is currently pure client-side. There is no server round-trip on game completion — games are **not** written to a database in the running app today. See "Database System" below.
+> **Note:** The app is fully client-side and static — there is no server or database. Everything stays in the browser.
 
-## Database System
+## Persistence
 
-> **Status:** The Drizzle schema, the D1 binding (`wrangler.toml`), the local SQLite connector (`src/lib/db/index.ts`), and the migration in `migrations/` all exist and are migration-ready — but **no application code currently calls the database.** `getDb()` is only exercised by tests; `src/app/` has no API routes or server actions. This is scaffolding for server-side game history/analytics that has not been wired into the client-only app. Treat the section below as the intended design, not current runtime behaviour. See [BACKLOG.md](./BACKLOG.md).
-
-### Local Development
-
-- **Database**: SQLite (`local.db`)
-- **ORM**: Drizzle ORM
-- **Setup**: `npm run db:local:reset`
-
-### Production
-
-- **Database**: Cloudflare D1
-- **ORM**: Drizzle ORM
-- **Migrations**: `npm run migrate:d1`
-
-### Schema
-
-```typescript
-// src/lib/db/schema.ts
-export const games = sqliteTable('games', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  playerId: text('playerId').notNull(),
-  winner: text('winner', { enum: ['player1', 'player2'] }),
-  completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
-  moveCount: integer('moveCount'),
-  duration: integer('duration'),
-  clientHeader: text('clientHeader'),
-  history: text('history', { mode: 'json' }),
-  gameType: text('gameType', { enum: ['classic', 'ml', 'watch', 'heuristic'] })
-    .notNull()
-    .default('classic'),
-});
-```
-
-### Game Statistics (intended design)
-
-The schema is designed to capture per-game records for later analytics:
-
-- **Outcome + metadata**: winner, move count, duration, and game type (`classic` / `ml` / `watch` / `heuristic`)
-- **Privacy-focused**: `playerId` generated with `nanoid()` for anonymous tracking — no PII
-
-Today, the only thing that persists between sessions is the **current game state** (via the Zustand `persist` middleware → `localStorage`, key `connect-4-game-storage`). Aggregate win-rate/analytics and database writes are not yet implemented.
+The app has **no server and no database** — it is served as static assets (see Deployment). The only thing that persists between sessions is the current game state, saved to `localStorage` by the Zustand `persist` middleware (key `connect-4-game-storage`), so a game in progress survives a refresh.
 
 ## Deployment
 
 ### Frontend Deployment
 
-- **Platform**: Next.js 15 deployed to Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`)
-- **Build**: `npm run build:cf`
+- **Platform**: static site (Next.js `output: 'export'`) served by Cloudflare Workers Static Assets — no server code, no cold starts
+- **Build**: `npm run build` (produces `out/`)
+- **Deploy**: `npm run deploy` (or push to `main` → CI), via `wrangler deploy`
 - **Domain**: `https://connect-4.tre.systems`
 
 ### WASM Security Headers
@@ -231,14 +187,12 @@ AI runs **exclusively client-side** (WASM). This was a deliberate move away from
 ### Development Environment
 
 - **Dev-only tools**: AI diagnostics, AI toggle, reset/test buttons (only on localhost)
-- **Local database**: SQLite for development
 - **Debug features**: Enhanced logging and diagnostics
 
 ### Production Environment
 
 - **Clean UI**: No development tools
 - **Classic AI default**: Most reliable AI opponent
-- **Cloudflare D1**: Production database
 - **Optimized builds**: Minified and optimized assets
 
 ## Summary
@@ -247,5 +201,4 @@ AI runs **exclusively client-side** (WASM). This was a deliberate move away from
 - All AI runs locally in the browser (WASM)
 - Clear separation of concerns
 - Full offline support (PWA)
-- Privacy-focused, anonymous player IDs
-- Database layer scaffolded (D1 + Drizzle) but not yet wired into the app
+- Static deploy — no server, no database, no cold starts

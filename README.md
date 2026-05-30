@@ -1,6 +1,6 @@
 # Connect Four
 
-A Connect Four game with a Rust/WebAssembly AI that runs entirely in the browser — Next.js 15 on Cloudflare Workers.
+A Connect Four game with a Rust/WebAssembly AI that runs entirely in the browser — a static Next.js 15 site on Cloudflare.
 
 **Play it: [connect-4.tre.systems](https://connect-4.tre.systems/)**
 
@@ -20,7 +20,6 @@ A Connect Four game with a Rust/WebAssembly AI that runs entirely in the browser
 ```bash
 npm install
 npm run build:wasm-assets   # compile the Rust AI to WASM + copy model assets
-npm run db:setup            # create the local SQLite database
 npm run dev                 # http://localhost:3000
 ```
 
@@ -31,25 +30,24 @@ Requires Node 20+, Rust + Cargo, and [`wasm-pack`](https://github.com/rustwasm/w
 | Command                                   | Description                                               |
 | ----------------------------------------- | --------------------------------------------------------- |
 | `npm run dev`                             | Dev server (Turbopack)                                    |
-| `npm run build:cf`                        | Production build (OpenNext → Cloudflare)                  |
+| `npm run build`                           | Static production build (→ `out/`)                        |
 | `npm run check`                           | Full gate: lint, type-check, Rust AI tests, coverage, e2e |
 | `npm run test` / `test:e2e` / `test:rust` | Vitest unit / Playwright e2e / cargo tests                |
 | `npm run test:ai-comparison:fast`         | AI strength matrix (Rust)                                 |
-| `npm run deploy`                          | Build, apply D1 migrations, and deploy via Wrangler       |
-| `npm run logs`                            | Tail the production Worker logs                           |
+| `npm run deploy`                          | Build + deploy the static site via Wrangler               |
 
 ## Architecture
 
 - **Frontend** — Next.js 15 / React 19; state in Zustand + Immer.
 - **AI engine** — Rust compiled to WebAssembly (`worker/`), instantiated and run on the main thread in the browser.
-- **Persistence** — current game state in `localStorage`. A Cloudflare D1 + Drizzle layer is scaffolded but **not yet wired in** (see [BACKLOG](docs/BACKLOG.md)).
-- **Hosting** — a single Cloudflare Worker (Next.js via [OpenNext](https://opennext.js.org/cloudflare)) serving the SPA plus the WASM and model assets.
+- **Persistence** — current game state in `localStorage`. No server or database.
+- **Hosting** — a static site (Next.js `output: 'export'`) served by Cloudflare Workers Static Assets. No server code, no cold starts.
 
 See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the system design, patterns, and diagrams, and **[docs/AI-SYSTEM.md](docs/AI-SYSTEM.md)** for the AI engine.
 
 ## Deployment
 
-Pushing to `main` runs the full `npm run check` gate in [CI](.github/workflows/deploy.yml) and, if green, deploys to Cloudflare. CI does **not** apply D1 migrations — run `npm run deploy` (or `npm run db:migrate`) yourself when the schema changes.
+Pushing to `main` runs the full `npm run check` gate in [CI](.github/workflows/deploy.yml) and, if green, deploys the static `out/` to Cloudflare via `wrangler deploy`.
 
 ## Documentation
 

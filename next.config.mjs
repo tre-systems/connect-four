@@ -1,8 +1,8 @@
-import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
-
-initOpenNextCloudflareForDev();
-
 const nextConfig = {
+  output: 'export',
+  images: {
+    unoptimized: true,
+  },
   webpack: (config, { isServer }) => {
     config.experiments = {
       ...config.experiments,
@@ -20,16 +20,6 @@ const nextConfig = {
     }
 
     return config;
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'storage.ko-fi.com',
-        port: '',
-        pathname: '/cdn/**',
-      },
-    ],
   },
 };
 

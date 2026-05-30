@@ -74,17 +74,10 @@ jobs:
       - name: Run all tests
         run: npm run check
 
-      - name: Build
-        run: npm run build:cf
+      - name: Build static site
+        run: npm run build
         env:
           GITHUB_SHA: ${{ github.sha }}
-
-      - name: Verify database status
-        run: |
-          echo "Database is already properly configured with games table"
-          echo "Migration 0000_legal_titania.sql was applied on 2025-07-18"
-          echo "Skipping migration step as database is up to date"
-        continue-on-error: true
 
       - name: Deploy Frontend
         run: wrangler deploy --config wrangler.toml --env=""
